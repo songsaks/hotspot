@@ -1,0 +1,83 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}User List - 9Com Hotspot{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        background: white;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+    }
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .badge-status {
+        background: #eff6ff;
+        color: #3b82f6;
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .table { border-collapse: separate; border-spacing: 0 8px; }
+    .table thead th { border: none; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 1rem; }
+    .table tbody tr { background: #fff; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .table tbody tr:hover { transform: scale(1.005); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .table tbody td { padding: 1rem; border: none; vertical-align: middle; }
+    .table tbody tr td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    .table tbody tr td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+    .user-icon { width: 35px; height: 35px; background: #f1f5f9; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; margin-right: 1rem; color: #3b82f6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-card">
+    <div class="header-section">
+        <div>
+            <h3 class="fw-bold mb-1">Hotspot Users</h3>
+            <span class="badge-status"><i class="fas fa-database me-1"></i> Data Source: Cloud VPS</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'user_import' %}" class="btn btn-outline-success rounded-pill px-4">
+                <i class="fas fa-file-excel me-2"></i>Import
+            </a>
+            <a href="{% url 'user_create' %}" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-plus me-2"></i>Add User
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Password / Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="user-icon"><i class="fas fa-user"></i></div>
+                            <span class="fw-semibold">{{ user.username }}</span>
+                        </div>
+                    </td>
+                    <td><code>{{ user.value }}</code></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center py-5 text-muted">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

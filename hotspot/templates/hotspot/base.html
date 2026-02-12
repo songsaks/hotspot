@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}9Com Hotspot{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #0d6efd;
+            --light-bg: #f5f7fb;
+            --sidebar-width: 260px;
+            --card-border: #eef2f7;
+        }
+        body {
+            background-color: var(--light-bg);
+            color: #334155;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+        }
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid var(--card-border);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        .sidebar-brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding: 0.5rem;
+        }
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: #eff6ff;
+            color: var(--primary-blue);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+        }
+        .nav-link {
+            color: #64748b;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .nav-link:hover {
+            background: #f8fafc;
+            color: var(--primary-blue);
+        }
+        .nav-link.active {
+            background: #eff6ff;
+            color: var(--primary-blue);
+        }
+        .nav-link i {
+            width: 20px;
+            margin-right: 1rem;
+            font-size: 1.1rem;
+        }
+        /* Main Content Styles */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2.5rem;
+            width: 100%;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: none;
+        }
+        .alert-dismissible .btn-close {
+            padding: 1.25rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{% url 'user_list' %}" class="sidebar-brand">
+            <div class="brand-icon"><i class="fas fa-wifi"></i></div>
+            <span>9COM HOTSPOT</span>
+        </a>
+        
+        <div class="nav flex-column">
+            <small class="text-uppercase text-muted fw-bold mb-2 px-3" style="font-size: 0.65rem; letter-spacing: 0.05em;">Management</small>
+            <a href="{% url 'user_list' %}" class="nav-link {% if request.resolver_match.url_name == 'user_list' or request.resolver_match.url_name == 'user_create' %}active{% endif %}">
+                <i class="fas fa-users-cog"></i> Users List
+            </a>
+            <a href="{% url 'user_import' %}" class="nav-link {% if request.resolver_match.url_name == 'user_import' %}active{% endif %}">
+                <i class="fas fa-file-excel"></i> Bulk Import
+            </a>
+            <a href="{% url 'manage_profiles' %}" class="nav-link {% if request.resolver_match.url_name == 'manage_profiles' %}active{% endif %}">
+                <i class="fas fa-layer-group"></i> Profile Groups
+            </a>
+            
+            <div class="mt-auto">
+                <div class="p-3 bg-light rounded-4 d-flex align-items-center">
+                    <div class="bg-success rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                    <small class="text-muted fw-bold">VPS Live Status</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0 shadow-sm alert-dismissible fade show rounded-4 mb-4" role="alert">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

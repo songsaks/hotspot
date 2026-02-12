@@ -1,0 +1,69 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Edit Profile - 9Com Hotspot{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-0 pt-4 pb-0 text-center">
+                <div class="stats-icon mx-auto mb-3" style="background: #eff6ff; color: #3b82f6;">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h4 class="fw-bold">Edit Profile: {{ data.groupname }}</h4>
+                <p class="text-muted small">Update bandwidth and session limits</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small text-muted">Download Speed</label>
+                            <div class="input-group">
+                                <input type="text" name="download_speed" class="form-control rounded-pill-start" value="{{ data.dl }}" required>
+                                <span class="input-group-text bg-light border-start-0 text-muted">M</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small text-muted">Upload Speed</label>
+                            <div class="input-group">
+                                <input type="text" name="upload_speed" class="form-control rounded-pill-start" value="{{ data.ul }}" required>
+                                <span class="input-group-text bg-light border-start-0 text-muted">M</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Session Timeout (Hours)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="far fa-clock"></i></span>
+                            <input type="number" name="session_timeout" class="form-control" value="{{ data.timeout }}" required>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary rounded-pill py-2 fw-bold">
+                            <i class="fas fa-save me-2"></i>Update Profile
+                        </button>
+                        <a href="{% url 'manage_profiles' %}" class="btn btn-link text-muted text-decoration-none small">
+                            Cancel and go back
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .rounded-pill-start {
+        border-top-left-radius: 50px !important;
+        border-bottom-left-radius: 50px !important;
+    }
+    .input-group-text {
+        border-top-right-radius: 50px !important;
+        border-bottom-right-radius: 50px !important;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .card { overflow: hidden; }
+</style>
+{% endblock %}
