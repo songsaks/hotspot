@@ -1,66 +1,66 @@
 {% extends 'hotspot/base.html' %}
 
-{% block title %}Bulk Import - 9Com Hotspot{% endblock %}
+{% block title %}Bulk Import - 9Com Cloud{% endblock %}
 
 {% block extra_css %}
 <style>
-    .import-card { max-width: 600px; margin: 2rem auto; }
-    .upload-box {
-        border: 2px dashed #e2e8f0;
-        border-radius: 1.25rem;
-        padding: 3rem 2rem;
-        text-align: center;
-        background: #f8fafc;
-        transition: all 0.2s;
+    .import-container {
+        max-width: 500px;
+        margin: 2rem auto;
     }
-    .upload-box:hover { border-color: #10b981; background: #f0fdf4; }
-    .info-box { background: #fffbeb; border: 1px solid #fef3c7; border-radius: 1rem; padding: 1.25rem; margin-bottom: 2rem; }
-    .form-label { font-weight: 600; color: #64748b; }
+    
+    .guide-box {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .form-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="card import-card border-0 shadow-sm">
-    <div class="card-header border-0 text-center pt-4 bg-white">
-        <div class="stats-icon mx-auto mb-3" style="background: #ecfdf5; color: #10b981;">
-            <i class="fas fa-file-excel fa-lg"></i>
-        </div>
-        <h4 class="fw-bold mb-0">Excel Bulk Import</h4>
-        <p class="text-muted small">Import multiple hotspot users at once</p>
+<div class="import-container">
+    <div class="mb-4 text-center">
+        <h4 class="fw-800 mb-1">Bulk User Import</h4>
+        <p class="text-muted text-small">Upload Excel file to create multiple accounts</p>
     </div>
-    <div class="card-body px-4 pb-5">
-        <div class="info-box">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-info-circle text-warning fs-4 me-3"></i>
-                <div>
-                    <h6 class="mb-1 fw-bold text-dark">Required Format</h6>
-                    <p class="mb-0 small text-muted">File must contain 2 columns: <strong>username</strong> and <strong>password</strong>.</p>
-                </div>
-            </div>
-        </div>
 
+    <div class="guide-box">
+        <h6 class="fw-bold mb-1" style="font-size: 0.85rem;"><i class="fas fa-exclamation-triangle me-2"></i>Preparation Guide</h6>
+        <p class="mb-0 text-small text-muted">Ensure your Excel file has columns named exactly: <span class="fw-bold text-dark">username</span> and <span class="fw-bold text-dark">password</span>.</p>
+    </div>
+
+    <div class="form-section">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <div class="mb-4">
-                <label class="form-label">1. Choose Excel File (.xlsx, .xls)</label>
+            <div class="mb-3">
+                <label class="form-label mb-1">1. Excel File Source</label>
                 {{ form.excel_file }}
+                <div class="text-small text-muted mt-1">Supported: .xlsx, .xls</div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label">2. Assign to Profile (Optional)</label>
+                <label class="form-label mb-1">2. Auto-Assign Profile</label>
                 {{ form.profile }}
-                <small class="text-muted mt-1 d-block">All users in this file will be added to this profile automatically.</small>
+                <div class="text-small text-muted mt-1">Leave blank for no automatic group assignment.</div>
             </div>
 
-            <hr class="my-4 opacity-50">
-
-            <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold text-white shadow-sm mt-2">
-                <i class="fas fa-upload me-2"></i>Start Import Process
+            <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="fas fa-file-import me-1"></i> Start Import Process
             </button>
             <div class="text-center mt-3">
-                <a href="{% url 'user_list' %}" class="btn btn-link btn-sm text-muted text-decoration-none">
-                    <i class="fas fa-times me-1"></i> Cancel and go back
+                <a href="{% url 'user_list' %}" class="btn btn-link py-0 text-muted text-decoration-none text-small">
+                    <i class="fas fa-times me-1"></i> Cancel
                 </a>
             </div>
         </form>

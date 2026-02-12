@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import connection
+from django.contrib.auth.decorators import login_required
 import pandas as pd
 from .models import Radcheck
 from .forms import HotspotUserForm, UserImportForm
+
+@login_required
+def dashboard(request):
+    return render(request, 'hotspot/dashboard.html')
 
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
@@ -13,11 +18,13 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
+@login_required
 def user_list(request):
     # ดึงข้อมูลจากฐานข้อมูลบน VPS
     users = Radcheck.objects.all().order_by('-id')[:100] # Show last 100
     return render(request, 'hotspot/user_list.html', {'users': users})
 
+@login_required
 def user_create(request):
     if request.method == 'POST':
         form = HotspotUserForm(request.POST)
@@ -29,6 +36,7 @@ def user_create(request):
         form = HotspotUserForm()
     return render(request, 'hotspot/user_form.html', {'form': form})
 
+@login_required
 def user_import(request):
     # Fetch existing profiles for the dropdown
     with connection.cursor() as cursor:
@@ -95,6 +103,7 @@ def user_import(request):
     
     return render(request, 'hotspot/user_import.html', {'form': form})
 
+@login_required
 def manage_profiles(request):
     with connection.cursor() as cursor:
         if request.method == 'POST' and 'create_profile' in request.POST:
@@ -168,6 +177,7 @@ def manage_profiles(request):
         'users': users
     })
 
+@login_required
 def edit_profile(request, groupname):
     with connection.cursor() as cursor:
         if request.method == 'POST':
@@ -212,6 +222,7 @@ def edit_profile(request, groupname):
     
     return render(request, 'hotspot/profile_edit.html', {'data': data})
 
+@login_required
 def delete_profile(request, groupname):
     with connection.cursor() as cursor:
         # Delete from radgroupreply
@@ -221,12 +232,14 @@ def delete_profile(request, groupname):
     messages.success(request, f"Profile '{groupname}' and its assignments have been deleted.")
     return redirect('manage_profiles')
 
+@login_required
 def remove_user_from_group(request, username):
     with connection.cursor() as cursor:
         cursor.execute("DELETE FROM radusergroup WHERE username = %s", [username])
     messages.success(request, f"User '{username}' has been removed from the profile group.")
     return redirect('manage_profiles')
 
+@login_required
 def assign_user_group(request):
     if request.method == 'POST':
         username = request.POST.get('username')

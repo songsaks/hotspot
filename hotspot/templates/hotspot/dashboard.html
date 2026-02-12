@@ -1,0 +1,135 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Dashboard - 9Com Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-container {
+        min-height: calc(100vh - 180px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .welcome-card {
+        max-width: 800px;
+        padding: 3rem;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #2563eb 0%, #f97316 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        color: #64748b;
+        margin-bottom: 3rem;
+        line-height: 1.6;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .feature-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .feature-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border-color: #2563eb;
+    }
+
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        background: #f8fafc;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.25rem;
+        color: #2563eb;
+        transition: all 0.3s ease;
+    }
+
+    .feature-item:hover .feature-icon {
+        background: #2563eb;
+        color: white;
+    }
+
+    .feature-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        color: #1e293b;
+    }
+
+    .feature-desc {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <div class="welcome-card">
+        <div class="mb-4">
+            <span class="badge bg-soft-primary px-3 py-2 rounded-pill text-primary fw-bold" style="background: #eff6ff;">
+                <i class="fas fa-check-circle me-2"></i>ระบบพร้อมใช้งาน
+            </span>
+        </div>
+        
+        <h1 class="welcome-title">ยินดีต้อนรับสู่ 9Com Cloud Hotspot</h1>
+        <p class="welcome-subtitle">
+            ระบบบริหารจัดการอินเทอร์เน็ตหอพักและองค์กรแบบครบวงจร <br>
+            จัดการผู้ใช้งาน ความเร็ว และโปรไฟล์ ได้อย่างง่ายดายผ่านคลาวด์
+        </p>
+
+        <div class="feature-grid">
+            <a href="{% url 'user_list' %}" class="feature-item">
+                <div class="feature-icon"><i class="fas fa-users-cog"></i></div>
+                <div class="feature-name">จัดการผู้ใช้งาน</div>
+                <div class="feature-desc">ดูรายชื่อ เพิ่ม แก้ไข และลบผู้ใช้ hotspot</div>
+            </a>
+            
+            <a href="{% url 'user_import' %}" class="feature-item">
+                <div class="feature-icon"><i class="fas fa-file-import"></i></div>
+                <div class="feature-name">นำเข้าข้อมูล Excel</div>
+                <div class="feature-desc">เพิ่มผู้ใช้จำนวนมากพร้อมผูกโปรไฟล์ทันที</div>
+            </a>
+            
+            <a href="{% url 'manage_profiles' %}" class="feature-item">
+                <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+                <div class="feature-name">โปรไฟล์และกลุ่ม</div>
+                <div class="feature-desc">กำหนดความเร็วและเวลาการใช้งานอินเทอร์เน็ต</div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
