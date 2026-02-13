@@ -1,0 +1,138 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Compliance Report - Hotspot Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+    .table-report thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .table-report tbody td {
+        padding: 0.35rem 0.75rem; /* Tighter rows */
+        font-size: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .table-report tbody tr:hover { background-color: #f8fafc; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-item { background: #f1f5f9; padding: 0.75rem; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .stat-label { font-size: 0.6rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .stat-value { font-size: 1rem; font-weight: 800; color: #0f172a; }
+    .stat-user { font-size: 0.7rem; color: #3b82f6; font-weight: 600; }
+
+    .filter-panel { background: #f8fafc; padding: 1rem; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
+    
+    @media print {
+        .sidebar, .navbar, .filter-panel, .btn-no-print { display: none !important; }
+        .main-content { margin: 0 !important; padding: 0 !important; }
+        .report-card { border: none; }
+        body { background: white; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-800 mb-0">Compliance Report (Log พรบ.)</h4>
+        <p class="text-muted text-small mb-0">สรุปข้อมูลการจราจรทางคอมพิวเตอร์และปริมาณการใช้งาน</p>
+    </div>
+    <div class="d-flex gap-2 btn-no-print">
+        <a href="{% url 'export_compliance_csv' %}?nas_ip={{ current_nas }}&start_date={{ start_date }}&end_date={{ end_date }}&search={{ search_query }}" class="btn btn-success btn-sm">
+            <i class="fas fa-file-csv me-1"></i> Export CSV
+        </a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm">
+            <i class="fas fa-print me-1"></i> PDF Report
+        </button>
+    </div>
+</div>
+
+<!-- Aggregation Summary -->
+<div class="nav-section-title mb-2">Monthly Usage Summary (Top 10)</div>
+<div class="stats-grid">
+    {% for stat in monthly_stats %}
+    <div class="stat-item">
+        <div class="stat-user mb-1">{{ stat.username }}</div>
+        <div class="stat-value">{{ stat.total_in|filesizeformat }}</div>
+        <div class="stat-label">Total Download</div>
+    </div>
+    {% empty %}
+    <p class="text-muted text-small">No usage data found for this month.</p>
+    {% endfor %}
+</div>
+
+<!-- Filters -->
+<div class="filter-panel btn-no-print">
+    <form action="" method="GET" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label text-small fw-bold">NAS IP Address</label>
+            <input type="text" name="nas_ip" class="form-control form-control-sm" value="{{ current_nas }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label text-small fw-bold">จากวันที่ (Start Date)</label>
+            <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label text-small fw-bold">ถึงวันที่ (End Date)</label>
+            <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-small fw-bold">ค้นหา (Search Any)</label>
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="User, MAC, IP..." value="{{ search_query }}">
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                    <i class="fas fa-filter me-1"></i> Apply Filter
+                </button>
+                <a href="{% url 'compliance_report' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Data Table -->
+<div class="report-card">
+    <div class="table-responsive">
+        <table class="table table-report mb-0">
+            <thead>
+                <tr>
+                    <th>DateTime Start</th>
+                    <th>Username</th>
+                    <th>MAC Address</th>
+                    <th>IP Address</th>
+                    <th class="text-center">Time (s)</th>
+                    <th class="text-end">Download</th>
+                    <th class="text-end">Upload</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="fw-bold">{{ log.acctstarttime|date:"d/m/Y H:i" }}</td>
+                    <td class="text-primary fw-bold">{{ log.username }}</td>
+                    <td class="font-monospace" style="font-size: 0.65rem;">{{ log.mac }}</td>
+                    <td><code>{{ log.ip }}</code></td>
+                    <td class="text-center text-muted">{{ log.acctsessiontime }}</td>
+                    <td class="text-end text-success fw-bold">{{ log.download|filesizeformat }}</td>
+                    <td class="text-end text-warning fw-bold">{{ log.upload|filesizeformat }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted italic">ไม่พบข้อมูลตามเงื่อนไขที่ระบุ</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

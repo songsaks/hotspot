@@ -1,6 +1,6 @@
 {% extends 'hotspot/base.html' %}
 
-{% block title %}Hotspot Users - 9Com Cloud{% endblock %}
+{% block title %}Hotspot Users - Hotspot Cloud{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -56,10 +56,21 @@
         border-radius: 6px;
         transition: all 0.2s;
         text-decoration: none;
+        border: 1px solid transparent;
+        font-size: 0.75rem;
     }
     
-    .btn-del-user { background: #fff1f2; color: #f43f5e; border: 1px solid #ffe4e6; }
-    .btn-del-user:hover { background: #f43f5e; color: white; }
+    .btn-del { background: #fff1f2; color: #f43f5e; border-color: #ffe4e6; }
+    .btn-del:hover { background: #f43f5e; color: white; }
+
+    .btn-reset { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
+    .btn-reset:hover { background: #16a34a; color: white; }
+
+    .btn-toggle-on { background: #ecfeff; color: #0891b2; border-color: #cffafe; }
+    .btn-toggle-on:hover { background: #0891b2; color: white; }
+
+    .btn-toggle-off { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+    .btn-toggle-off:hover { background: #64748b; color: white; }
 
     .profile-select {
         font-size: 0.7rem !important;
@@ -77,6 +88,27 @@
         border-radius: 4px;
         font-family: 'Courier New', Courier, monospace;
     }
+
+    .status-badge {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .status-enabled { background: #dcfce7; color: #15803d; }
+    .status-disabled { background: #fee2e2; color: #b91c1c; }
+
+    /* Autocomplete Styles */
+    .search-wrapper { position: relative; width: 250px; }
+    .autocomplete-items {
+        position: absolute; border: 1px solid #e2e8f0; border-bottom: none; border-top: none;
+        z-index: 99; top: 100%; left: 0; right: 0; border-radius: 0 0 12px 12px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; background: white;
+    }
+    .autocomplete-items div { padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
+    .autocomplete-items div:hover { background-color: #f8fafc; color: #3b82f6; }
+    .autocomplete-active { background-color: #3b82f6 !important; color: #ffffff !important; }
 </style>
 {% endblock %}
 
@@ -84,16 +116,22 @@
 <div class="page-header">
     <div>
         <h4 class="fw-800 mb-0">Hotspot Users</h4>
-        <p class="text-muted text-small mb-0">Manage individual user accounts and profile assignments</p>
+        <p class="text-muted text-small mb-0">Manage individual user accounts, profiles, and access status</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'active_sessions' %}" class="btn btn-primary d-flex align-items-center" style="background: #10b981; border:none;">
+        <form action="" method="GET" class="search-wrapper autocomplete" id="searchForm">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                <input id="searchInput" type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search username..." value="{{ search_query }}" autocomplete="off">
+                {% if search_query %}
+                    <a href="{% url 'user_list' %}" class="btn btn-outline-secondary border-start-0 border"><i class="fas fa-times"></i></a>
+                {% endif %}
+            </div>
+        </form>
+        <a href="{% url 'active_sessions' %}" class="btn btn-primary btn-sm d-flex align-items-center" style="background: #10b981; border:none;">
             <i class="fas fa-satellite-dish me-2"></i> Live Monitor
         </a>
-        <a href="{% url 'user_import' %}" class="btn btn-light border">
-            <i class="fas fa-file-excel me-1"></i> Import Excel
-        </a>
-        <a href="{% url 'user_create' %}" class="btn btn-primary">
+        <a href="{% url 'user_create' %}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus me-1"></i> Add User
         </a>
     </div>
@@ -107,23 +145,26 @@
                     <th class="ps-4">User Details</th>
                     <th>Password</th>
                     <th>Active Profile</th>
+                    <th class="text-center">Status</th>
                     <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
-                <tr>
+                <tr {% if user.is_disabled %}style="background-color: #fffafb;"{% endif %}>
                     <td class="ps-4">
                         <div class="d-flex align-items-center">
-                            <div class="user-avatar">
+                            <div class="user-avatar {% if user.is_disabled %}bg-light text-muted{% endif %}">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <span class="fw-800">{{ user.username }}</span>
-                            {% if user.is_self_reg %}
-                                <span class="badge rounded-pill ms-2" style="background: #eff6ff; color: #3b82f6; font-size: 0.6rem; border: 1px solid #dbeafe;">
-                                    <i class="fas fa-id-card me-1"></i> Self-Reg
-                                </span>
-                            {% endif %}
+                            <div class="d-flex flex-column">
+                                <span class="fw-800 {% if user.is_disabled %}text-muted text-decoration-line-through{% endif %}">{{ user.username }}</span>
+                                {% if user.is_self_reg %}
+                                    <span class="text-primary" style="font-size: 0.65rem; font-weight: 600;">
+                                         Self-Reg
+                                    </span>
+                                {% endif %}
+                            </div>
                         </div>
                     </td>
                     <td><code>{{ user.password }}</code></td>
@@ -131,7 +172,7 @@
                         <form action="{% url 'assign_user_group' %}" method="POST" class="d-inline">
                             {% csrf_token %}
                             <input type="hidden" name="username" value="{{ user.username }}">
-                            <select name="groupname" class="form-select profile-select" onchange="this.form.submit()">
+                            <select name="groupname" class="form-select profile-select" onchange="this.form.submit()" {% if user.is_disabled %}disabled{% endif %}>
                                 <option value="" {% if not user.groupname %}selected{% endif %}>No Profile</option>
                                 {% for prof in profiles %}
                                     <option value="{{ prof.groupname }}" {% if user.groupname == prof.groupname %}selected{% endif %}>
@@ -142,14 +183,54 @@
                         </form>
                     </td>
                     <td class="text-center">
-                        <a href="{% url 'delete_user' user.username %}" class="btn-action btn-del-user d-inline-flex" title="Delete User" onclick="return confirm('Delete user account and profile settings?')">
-                            <i class="fas fa-trash-alt"></i>
-                        </a>
+                        {% if user.is_disabled %}
+                            <span class="status-badge status-disabled">Disabled</span>
+                        {% else %}
+                            <span class="status-badge status-enabled">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="{% url 'toggle_user_status' user.username %}" class="btn-action {% if user.is_disabled %}btn-toggle-on{% else %}btn-toggle-off{% endif %}" title="{% if user.is_disabled %}Enable User{% else %}Disable User{% endif %}">
+                                <i class="fas {% if user.is_disabled %}fa-toggle-off{% else %}fa-toggle-on{% endif %}"></i>
+                            </a>
+                            <button type="button" class="btn-action btn-reset" title="Reset Password" data-bs-toggle="modal" data-bs-target="#resetModal{{ forloop.index }}">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <a href="{% url 'delete_user' user.username %}" class="btn-action btn-del" title="Delete User" onclick="return confirm('Delete user account permanently?')">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+
+                        <!-- Reset Password Modal -->
+                        <div class="modal fade" id="resetModal{{ forloop.index }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                <div class="modal-content border-0 shadow-lg">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h6 class="modal-title fw-800">Reset Password</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{% url 'reset_password' user.username %}" method="POST">
+                                        {% csrf_token %}
+                                        <div class="modal-body py-3">
+                                            <div class="text-start mb-2">
+                                                <small class="text-muted">User: <strong>{{ user.username }}</strong></small>
+                                            </div>
+                                            <input type="text" name="new_password" class="form-control form-control-sm" placeholder="Enter new password" value="{{ user.password }}" required>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0 justify-content-center">
+                                            <button type="submit" class="btn btn-primary btn-sm px-4">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-5 text-muted">
+                    <td colspan="5" class="text-center py-5 text-muted">
                         <i class="fas fa-search fa-2x mb-3 opacity-25 d-block"></i>
                         No users found in database.
                     </td>
@@ -159,4 +240,85 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function autocomplete(inp) {
+  var currentFocus;
+  inp.addEventListener("input", function(e) {
+      var val = this.value;
+      closeAllLists();
+      if (!val || val.length < 1) { return false; }
+      currentFocus = -1;
+      
+      fetch(`/api/user-autocomplete/?term=${val}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) return;
+            var a = document.createElement("DIV");
+            a.setAttribute("id", this.id + "autocomplete-list");
+            a.setAttribute("class", "autocomplete-items");
+            this.parentNode.appendChild(a);
+            for (var i = 0; i < data.length; i++) {
+                var b = document.createElement("DIV");
+                b.innerHTML = "<strong>" + data[i].substr(0, val.length) + "</strong>";
+                b.innerHTML += data[i].substr(val.length);
+                b.innerHTML += "<input type='hidden' value='" + data[i] + "'>";
+                b.addEventListener("click", function(e) {
+                    inp.value = this.getElementsByTagName("input")[0].value;
+                    closeAllLists();
+                    inp.closest('form').submit();
+                });
+                a.appendChild(b);
+            }
+        });
+  });
+  
+  inp.addEventListener("keydown", function(e) {
+      var x = document.getElementById(this.id + "autocomplete-list");
+      if (x) x = x.getElementsByTagName("div");
+      if (e.keyCode == 40) {
+        currentFocus++;
+        addActive(x);
+      } else if (e.keyCode == 38) {
+        currentFocus--;
+        addActive(x);
+      } else if (e.keyCode == 13) {
+        if (currentFocus > -1) {
+          if (x) {
+            e.preventDefault();
+            x[currentFocus].click();
+          }
+        }
+      }
+  });
+  
+  function addActive(x) {
+    if (!x) return false;
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (x.length - 1);
+    x[currentFocus].classList.add("autocomplete-active");
+  }
+  function removeActive(x) {
+    for (var i = 0; i < x.length; i++) {
+      x[i].classList.remove("autocomplete-active");
+    }
+  }
+  function closeAllLists(elmnt) {
+    var x = document.getElementsByClassName("autocomplete-items");
+    for (var i = 0; i < x.length; i++) {
+      if (elmnt != x[i] && elmnt != inp) {
+        x[i].parentNode.removeChild(x[i]);
+      }
+    }
+  }
+  document.addEventListener("click", function (e) {
+      closeAllLists(e.target);
+  });
+}
+
+autocomplete(document.getElementById("searchInput"));
+</script>
 {% endblock %}

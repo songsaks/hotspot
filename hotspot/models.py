@@ -106,3 +106,19 @@ class ApprovedUser(models.Model):
 
     def __str__(self):
         return self.username
+
+
+class AdminActivityLog(models.Model):
+    admin_user = models.CharField(max_length=64)  # Username of the DJANGO admin
+    action = models.CharField(max_length=100)      # e.g., 'Approve', 'Delete User', 'Reset Password'
+    target = models.CharField(max_length=100)      # e.g., 'customer_username'
+    details = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'admin_activity_logs'
+        managed = True
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.admin_user} - {self.action} - {self.target}"

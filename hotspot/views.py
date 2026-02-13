@@ -1,12 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib import messages
 from django.db import connection
 from django.contrib.auth.decorators import login_required
 import pandas as pd
 import random
 import string
-from .models import Radcheck, PendingUser, ApprovedUser
+import logging
+import os
+import csv
+from datetime import datetime
+from django.conf import settings
+from django.http import HttpResponse
+from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog
 from .forms import HotspotUserForm, UserImportForm
+
+logger = logging.getLogger('hotspot')
 
 @login_required
 def dashboard(request):
@@ -60,6 +69,15 @@ def approve_user(request, pk):
             
             # 4. Remove from pending
             pending.delete()
+            
+            # Record log
+            AdminActivityLog.objects.create(
+                admin_user=request.user.username,
+                action='Approve User',
+                target=pending.username,
+                details=f"Approved and assigned to profile: {groupname}"
+            )
+            
             messages.success(request, f"User '{pending.username}' approved and assigned to '{groupname}'.")
         else:
             messages.error(request, "Please select a profile.")
@@ -113,23 +131,106 @@ def dictfetchall(cursor):
     ]
 
 @login_required
+def user_autocomplete(request):
+    term = request.GET.get('term', '')
+    users = []
+    if term:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT username FROM radcheck WHERE username LIKE %s LIMIT 10", [f'%{term}%'])
+            users = [row[0] for row in cursor.fetchall()]
+    return JsonResponse(users, safe=False)
+
+@login_required
 def user_list(request):
+    search_query = request.GET.get('search', '').strip()
     with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT rc.id, rc.username, rc.value as password, rug.groupname, au.id as is_self_reg
-            FROM radcheck rc
-            LEFT JOIN radusergroup rug ON rc.username = rug.username
-            LEFT JOIN approved_users au ON rc.username = au.username
-            ORDER BY rc.id DESC LIMIT 100
-        """)
+        if search_query:
+            cursor.execute("""
+                SELECT 
+                    rc.id, 
+                    rc.username, 
+                    rc.value as password, 
+                    rug.groupname, 
+                    au.id as is_self_reg,
+                    (SELECT 1 FROM radcheck rc2 WHERE rc2.username = rc.username AND rc2.attribute = 'Auth-Type' AND rc2.value = 'Reject' LIMIT 1) as is_disabled
+                FROM radcheck rc
+                LEFT JOIN radusergroup rug ON rc.username = rug.username
+                LEFT JOIN approved_users au ON rc.username = au.username
+                WHERE rc.attribute = 'Cleartext-Password' AND rc.username LIKE %s
+                ORDER BY rc.id DESC
+            """, [f'%{search_query}%'])
+        else:
+            cursor.execute("""
+                SELECT 
+                    rc.id, 
+                    rc.username, 
+                    rc.value as password, 
+                    rug.groupname, 
+                    au.id as is_self_reg,
+                    (SELECT 1 FROM radcheck rc2 WHERE rc2.username = rc.username AND rc2.attribute = 'Auth-Type' AND rc2.value = 'Reject' LIMIT 1) as is_disabled
+                FROM radcheck rc
+                LEFT JOIN radusergroup rug ON rc.username = rug.username
+                LEFT JOIN approved_users au ON rc.username = au.username
+                WHERE rc.attribute = 'Cleartext-Password'
+                ORDER BY rc.id DESC LIMIT 100
+            """)
+        
         users = dictfetchall(cursor)
         cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
         profiles = dictfetchall(cursor)
 
     return render(request, 'hotspot/user_list.html', {
         'users': users,
-        'profiles': profiles
+        'profiles': profiles,
+        'search_query': search_query
     })
+
+@login_required
+def reset_password(request, username):
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        if new_password:
+            Radcheck.objects.filter(username=username, attribute='Cleartext-Password').update(value=new_password)
+            
+            AdminActivityLog.objects.create(
+                admin_user=request.user.username,
+                action='Reset Password',
+                target=username,
+                details="Password updated by administrator"
+            )
+            
+            messages.success(request, f"Password for user '{username}' has been reset.")
+        else:
+            messages.error(request, "Password cannot be empty.")
+    return redirect('user_list')
+
+@login_required
+def toggle_user_status(request, username):
+    # Check if currently disabled
+    is_disabled = Radcheck.objects.filter(username=username, attribute='Auth-Type', value='Reject').exists()
+    
+    if is_disabled:
+        # Enable: Remove Reject attribute
+        Radcheck.objects.filter(username=username, attribute='Auth-Type', value='Reject').delete()
+        messages.success(request, f"User '{username}' has been enabled.")
+    else:
+        # Disable: Add Reject attribute
+        Radcheck.objects.create(
+            username=username,
+            attribute='Auth-Type',
+            op=':=',
+            value='Reject'
+        )
+        messages.warning(request, f"User '{username}' has been disabled.")
+        
+    AdminActivityLog.objects.create(
+        admin_user=request.user.username,
+        action='Toggle Status',
+        target=username,
+        details=f"User is now {'Enabled' if is_disabled else 'Disabled'}"
+    )
+        
+    return redirect('user_list')
 
 @login_required
 def active_sessions(request):
@@ -162,7 +263,112 @@ def usage_report(request):
         """)
         usage_data = dictfetchall(cursor)
     
-    return render(request, 'hotspot/usage_report.html', {'usage_data': usage_data})
+    return render(request, 'hotspot/usage_report.html', {
+        'usage_data': usage_data,
+        'title': 'Authentication Log (Full History)'
+    })
+
+@login_required
+def compliance_report(request):
+    nas_ip = request.GET.get('nas_ip', '10.1.1.2')
+    search_query = request.GET.get('search', '').strip()
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    
+    with connection.cursor() as cursor:
+        # Aggregation: Monthly usage per user
+        cursor.execute("""
+            SELECT 
+                username, 
+                COUNT(*) as sessions,
+                SUM(acctsessiontime) as total_time,
+                SUM(acctinputoctets) as total_in,
+                SUM(acctoutputoctets) as total_out
+            FROM radacct
+            WHERE acctstarttime >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            GROUP BY username
+            ORDER BY total_in DESC
+            LIMIT 10
+        """)
+        monthly_stats = dictfetchall(cursor)
+
+        # Main Log Query (Compliance)
+        sql = """
+            SELECT 
+                acctstarttime, acctstoptime, username, callingstationid as mac, 
+                framedipaddress as ip, acctsessiontime, acctinputoctets as download, 
+                acctoutputoctets as upload, nasipaddress
+            FROM radacct
+            WHERE nasipaddress = %s
+        """
+        params = [nas_ip]
+        
+        if start_date:
+            sql += " AND acctstarttime >= %s"
+            params.append(start_date)
+        if end_date:
+            sql += " AND acctstarttime <= %s"
+            params.append(f"{end_date} 23:59:59")
+            
+        if search_query:
+            sql += " AND (username LIKE %s OR callingstationid LIKE %s OR framedipaddress LIKE %s)"
+            params.extend([f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'])
+        
+        sql += " ORDER BY acctstarttime DESC LIMIT 1000"
+        cursor.execute(sql, params)
+        logs = dictfetchall(cursor)
+
+    return render(request, 'hotspot/compliance_report.html', {
+        'logs': logs,
+        'monthly_stats': monthly_stats,
+        'search_query': search_query,
+        'current_nas': nas_ip,
+        'start_date': start_date,
+        'end_date': end_date
+    })
+
+@login_required
+def export_compliance_csv(request):
+    nas_ip = request.GET.get('nas_ip', '10.1.1.2')
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="hotspot_logs_{datetime.now().strftime("%Y%m%d")}.csv"'
+    response.write(u'\ufeff'.encode('utf8')) # BOM for Thai language in Excel
+
+    writer = csv.writer(response)
+    writer.writerow(['DateTime Start', 'DateTime Stop', 'Username', 'MAC Address', 'IP Address', 'Session Time (s)', 'Download (Bytes)', 'Upload (Bytes)'])
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT acctstarttime, acctstoptime, username, callingstationid, framedipaddress, 
+                   acctsessiontime, acctinputoctets, acctoutputoctets 
+            FROM radacct WHERE nasipaddress = %s ORDER BY acctstarttime DESC LIMIT 5000
+        """, [nas_ip])
+        for row in cursor.fetchall():
+            writer.writerow(row)
+    
+    return response
+
+@login_required
+def admin_logs(request):
+    # Admin Activity Logs
+    activity_logs = AdminActivityLog.objects.all()[:200]
+    
+    # System Logs from file
+    system_logs = []
+    log_file_path = os.path.join(settings.LOGS_DIR, 'hotspot_system.log')
+    if os.path.exists(log_file_path):
+        try:
+            with open(log_file_path, 'r', encoding='utf-8') as f:
+                # Get last 100 lines
+                system_logs = f.readlines()[-100:]
+                system_logs.reverse()
+        except Exception as e:
+            system_logs = [f"Error reading system logs: {str(e)}"]
+
+    return render(request, 'hotspot/admin_logs.html', {
+        'activity_logs': activity_logs,
+        'system_logs': system_logs
+    })
 
 @login_required
 def manage_vouchers(request):

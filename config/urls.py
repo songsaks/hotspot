@@ -8,7 +8,8 @@ from hotspot.views import (
     edit_profile, dashboard, active_sessions, 
     kick_user, delete_user, usage_report, manage_vouchers,
     self_register, registration_requests, approve_user, reject_user,
-    member_directory
+    member_directory, user_autocomplete, reset_password, toggle_user_status,
+    admin_logs, compliance_report, export_compliance_csv
 )
 
 from django.views.generic import RedirectView
@@ -23,6 +24,10 @@ urlpatterns = [
     path('portal/requests/approve/<int:pk>/', approve_user, name='approve_user'),
     path('portal/requests/reject/<int:pk>/', reject_user, name='reject_user'),
     path('portal/members/', member_directory, name='member_directory'),
+    path('portal/logs/', admin_logs, name='admin_logs'),
+    path('portal/compliance/', compliance_report, name='compliance_report'),
+    path('portal/compliance/export/', export_compliance_csv, name='export_compliance_csv'),
+    path('api/user-autocomplete/', user_autocomplete, name='user_autocomplete'),
 
     path('admin/', admin.site.urls),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='hotspot/login.html'), name='login'),
@@ -36,6 +41,8 @@ urlpatterns = [
     path('users/add/', user_create, name='user_create'),
     path('users/import/', user_import, name='user_import'),
     path('users/delete/<str:username>/', delete_user, name='delete_user'),
+    path('users/reset-password/<str:username>/', reset_password, name='reset_password'),
+    path('users/toggle-status/<str:username>/', toggle_user_status, name='toggle_user_status'),
     
     # Active Sessions & Reports
     path('sessions/', active_sessions, name='active_sessions'),

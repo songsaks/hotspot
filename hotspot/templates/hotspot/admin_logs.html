@@ -1,0 +1,105 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Activity Logs - Hotspot Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-container { background: #0f172a; color: #38bdf8; padding: 1.5rem; border-radius: 12px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8rem; line-height: 1.6; max-height: 500px; overflow-y: auto; border: 1px solid #1e293b; }
+    .log-line { margin-bottom: 2px; border-left: 2px solid transparent; padding-left: 10px; }
+    .log-line:hover { background: #1e293b; border-left-color: #38bdf8; }
+    .log-timestamp { color: #64748b; margin-right: 10px; }
+    .log-error { color: #f43f5e; }
+    .log-warning { color: #fbbf24; }
+    .log-info { color: #34d399; }
+
+    .activity-card { border: 1px solid #f1f5f9; border-radius: 12px; margin-bottom: 1rem; transition: all 0.2s; }
+    .activity-card:hover { border-color: #3b82f6; background: #fafafa; }
+    .activity-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; margin-right: 12px; }
+    .bg-approve { background: #dcfce7; color: #16a34a; }
+    .bg-delete { background: #fee2e2; color: #dc2626; }
+    .bg-reset { background: #f0f9ff; color: #0ea5e9; }
+    .bg-toggle { background: #fef9c3; color: #ca8a04; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="fw-800 mb-1">Activity & System Logs</h4>
+    <p class="text-muted text-small">Monitor administrative actions and system operations</p>
+</div>
+
+<ul class="nav nav-pills mb-4" id="logTabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#admin-logs">
+            <i class="fas fa-user-shield me-2"></i> Admin Actions
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#system-logs">
+            <i class="fas fa-terminal me-2"></i> System Logs
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Admin Logs Tab -->
+    <div class="tab-pane fade show active" id="admin-logs">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="list-group list-group-flush">
+                {% for log in activity_logs %}
+                <div class="list-group-item px-0 border-0 mb-3 activity-card p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon 
+                            {% if 'Approve' in log.action %}bg-approve
+                            {% elif 'Delete' in log.action %}bg-delete
+                            {% elif 'Reset' in log.action %}bg-reset
+                            {% else %}bg-toggle{% endif %}">
+                            <i class="fas 
+                                {% if 'Approve' in log.action %}fa-check-circle
+                                {% elif 'Delete' in log.action %}fa-trash-alt
+                                {% elif 'Reset' in log.action %}fa-key
+                                {% else %}fa-exchange-alt{% endif %}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-800">{{ log.action }} <span class="text-muted">on</span> {{ log.target }}</h6>
+                                <small class="text-muted fw-bold"><i class="far fa-clock me-1"></i> {{ log.timestamp|date:"d M Y H:i" }}</small>
+                            </div>
+                            <div class="d-flex gap-3 text-small mt-1">
+                                <span><i class="fas fa-user-edit text-muted me-1"></i> By: <strong>{{ log.admin_user }}</strong></span>
+                                <span class="text-muted fw-500 italic">{{ log.details }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-history fa-3x mb-3 opacity-25"></i>
+                    <p>No administrative activities found.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- System Logs Tab -->
+    <div class="tab-pane fade" id="system-logs">
+        <div class="card border-0 shadow-sm p-4">
+            <h6 class="fw-bold mb-3"><i class="fas fa-file-alt me-2 text-primary"></i> hotspot_system.log (Latest 100 lines)</h6>
+            <div class="log-container">
+                {% for line in system_logs %}
+                    <div class="log-line">
+                        {% if 'ERROR' in line %}<span class="log-error">{{ line }}</span>
+                        {% elif 'WARNING' in line %}<span class="log-warning">{{ line }}</span>
+                        {% else %}<span class="log-info">{{ line }}</span>{% endif %}
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        System log file is empty or not yet created.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

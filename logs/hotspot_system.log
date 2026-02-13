@@ -1,0 +1,161 @@
+INFO 2026-02-13 15:51:10,582 autoreload 12656 5080 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:10,719 autoreload 20496 36792 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:30,118 autoreload 12656 5080 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 15:51:30,263 autoreload 20496 36792 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 15:51:31,035 autoreload 35220 29880 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:31,143 autoreload 32476 35212 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:38,499 autoreload 32476 35212 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 15:51:39,229 autoreload 12800 2164 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:39,441 autoreload 35220 29880 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 15:51:40,134 autoreload 35660 5012 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:44,190 autoreload 35660 5012 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:51:44,261 autoreload 12800 2164 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:51:45,018 autoreload 36348 35012 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:45,085 autoreload 26952 36384 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:50,175 autoreload 36348 35012 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:51:50,207 autoreload 26952 36384 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:51:51,030 autoreload 28640 33096 Watching for file changes with StatReloader
+INFO 2026-02-13 15:51:51,057 autoreload 6900 8432 Watching for file changes with StatReloader
+INFO 2026-02-13 15:52:34,434 log 28640 8024 "GET /users/ HTTP/1.1" 200 542724
+ERROR 2026-02-13 15:52:39,412 log 28640 8024 Internal Server Error: /portal/logs/
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\mysql\base.py", line 78, in execute
+    return self.cursor.execute(query, args)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\MySQLdb\cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\MySQLdb\cursors.py", line 330, in _query
+    db.query(q)
+    ~~~~~~~~^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\MySQLdb\connections.py", line 286, in query
+    _mysql.connection.query(self, query)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+MySQLdb.ProgrammingError: (1146, "Table 'radius_db.admin_activity_logs' doesn't exist")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\hotspot\views.py", line 285, in admin_logs
+    return render(request, 'hotspot/admin_logs.html', {
+        'activity_logs': activity_logs,
+        'system_logs': system_logs
+    })
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 174, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 166, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 1091, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 1052, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader_tags.py", line 160, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 166, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 1091, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 1052, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader_tags.py", line 66, in render
+    result = block.nodelist.render(context)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 1091, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\base.py", line 1052, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\defaulttags.py", line 202, in render
+    len_values = len(values)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\models\query.py", line 372, in __len__
+    self._fetch_all()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\models\query.py", line 2000, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\models\query.py", line 95, in __iter__
+    results = compiler.execute_sql(
+        chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+    )
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\models\sql\compiler.py", line 1624, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\db\backends\mysql\base.py", line 78, in execute
+    return self.cursor.execute(query, args)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\MySQLdb\cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\MySQLdb\cursors.py", line 330, in _query
+    db.query(q)
+    ~~~~~~~~^^^
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\MySQLdb\connections.py", line 286, in query
+    _mysql.connection.query(self, query)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: (1146, "Table 'radius_db.admin_activity_logs' doesn't exist")
+ERROR 2026-02-13 15:52:39,422 log 28640 8024 "GET /portal/logs/ HTTP/1.1" 500 244563
+INFO 2026-02-13 15:53:33,997 log 28640 8024 "GET /portal/logs/ HTTP/1.1" 200 33790
+INFO 2026-02-13 15:58:09,526 autoreload 28640 33096 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 15:58:09,544 autoreload 6900 8432 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 15:58:10,538 autoreload 34012 16912 Watching for file changes with StatReloader
+INFO 2026-02-13 15:58:10,540 autoreload 25092 27704 Watching for file changes with StatReloader
+INFO 2026-02-13 15:58:14,691 autoreload 34012 16912 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:58:14,699 autoreload 25092 27704 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:58:15,567 autoreload 15084 15352 Watching for file changes with StatReloader
+INFO 2026-02-13 15:58:20,655 autoreload 35916 34412 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:58:20,660 autoreload 15084 15352 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-13 15:58:21,527 autoreload 31464 9396 Watching for file changes with StatReloader
+INFO 2026-02-13 15:58:21,555 autoreload 10016 27416 Watching for file changes with StatReloader
+INFO 2026-02-13 15:59:36,090 log 31464 15476 "GET /portal/logs/ HTTP/1.1" 200 34403
+INFO 2026-02-13 15:59:39,176 log 31464 15476 "GET /portal/compliance/ HTTP/1.1" 200 20318
+INFO 2026-02-13 16:01:13,240 log 31464 15476 "GET /portal/compliance/ HTTP/1.1" 200 20318
+INFO 2026-02-13 16:01:26,239 log 31464 15476 "GET /portal/compliance/ HTTP/1.1" 200 20318
+INFO 2026-02-13 16:02:57,307 autoreload 10016 27416 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 16:02:58,097 autoreload 31464 9396 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 16:02:58,436 autoreload 13468 35588 Watching for file changes with StatReloader
+INFO 2026-02-13 16:02:59,114 autoreload 36284 9244 Watching for file changes with StatReloader
+INFO 2026-02-13 16:03:22,664 log 13468 29968 "GET /portal/compliance/ HTTP/1.1" 200 19626
+INFO 2026-02-13 16:06:02,802 log 13468 29968 "GET /portal/compliance/ HTTP/1.1" 200 19626
