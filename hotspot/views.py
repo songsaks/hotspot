@@ -86,8 +86,21 @@ def approve_user(request, pk):
 @login_required
 def reject_user(request, pk):
     pending = get_object_or_404(PendingUser, pk=pk)
+    username = pending.username
     pending.delete()
-    messages.warning(request, f"Registration request for '{pending.username}' has been rejected.")
+    
+    # Also ensure no residue is left in ApprovedUser if they were approved before
+    ApprovedUser.objects.filter(username=username).delete()
+    
+    # Record log
+    AdminActivityLog.objects.create(
+        admin_user=request.user.username,
+        action='Reject Registration',
+        target=username,
+        details="Registration request was rejected by administrator"
+    )
+    
+    messages.warning(request, f"Registration request for '{username}' has been rejected.")
     return redirect('registration_requests')
 
 # This view is PUBLIC (no login required) - Called by Mikrotik
@@ -102,9 +115,15 @@ def self_register(request):
             messages.error(request, "Username and Password are required.")
             return render(request, 'hotspot/self_register.html')
             
-        # Check if username already exists in either table
-        if Radcheck.objects.filter(username=username).exists() or PendingUser.objects.filter(username=username).exists():
-            messages.error(request, "Username already taken.")
+        # Check if username already exists in any of our 3 user tables (Case-Insensitive)
+        username_exists = (
+            Radcheck.objects.filter(username__iexact=username).exists() or 
+            PendingUser.objects.filter(username__iexact=username).exists() or
+            ApprovedUser.objects.filter(username__iexact=username).exists()
+        )
+        
+        if username_exists:
+            messages.error(request, "This username is already taken or pending approval.")
             return render(request, 'hotspot/self_register.html')
             
         PendingUser.objects.create(

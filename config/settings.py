@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ndjg_vk&ugi42j*h2#1h50z7of+q7lj9%i5_0j=#%@&(g(-kl(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.9hotspot.cloud', '9hotspot.cloud', 'localhost', '127.0.0.1', '76.13.188.152']
 
 
 # Application definition

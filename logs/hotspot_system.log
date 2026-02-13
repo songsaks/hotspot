@@ -159,3 +159,10 @@ INFO 2026-02-13 16:02:58,436 autoreload 13468 35588 Watching for file changes wi
 INFO 2026-02-13 16:02:59,114 autoreload 36284 9244 Watching for file changes with StatReloader
 INFO 2026-02-13 16:03:22,664 log 13468 29968 "GET /portal/compliance/ HTTP/1.1" 200 19626
 INFO 2026-02-13 16:06:02,802 log 13468 29968 "GET /portal/compliance/ HTTP/1.1" 200 19626
+INFO 2026-02-13 16:06:08,789 log 13468 29968 "GET /portal/logs/ HTTP/1.1" 200 34643
+INFO 2026-02-13 16:06:11,489 log 13468 29968 "GET /portal/compliance/ HTTP/1.1" 200 19626
+INFO 2026-02-13 16:14:28,750 autoreload 36284 9244 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
+INFO 2026-02-13 16:14:28,772 autoreload 13468 35588 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
+INFO 2026-02-13 16:14:29,655 autoreload 29412 32760 Watching for file changes with StatReloader
+INFO 2026-02-13 16:14:39,943 autoreload 29412 32760 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
+INFO 2026-02-13 16:14:39,946 autoreload 20376 34956 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
