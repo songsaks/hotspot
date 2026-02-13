@@ -6,10 +6,22 @@ from hotspot.views import (
     manage_profiles, assign_user_group, 
     delete_profile, remove_user_from_group,
     edit_profile, dashboard, active_sessions, 
-    kick_user, delete_user, usage_report, manage_vouchers
+    kick_user, delete_user, usage_report, manage_vouchers,
+    self_register, registration_requests, approve_user, reject_user
 )
 
+from django.views.generic import RedirectView
+
 urlpatterns = [
+    # Redirect old path to new path
+    path('admin/requests/', RedirectView.as_view(pattern_name='registration_requests', permanent=True)),
+    
+    # Self Registration & Approvals (Priority)
+    path('register/', self_register, name='self_register'),
+    path('portal/requests/', registration_requests, name='registration_requests'),
+    path('portal/requests/approve/<int:pk>/', approve_user, name='approve_user'),
+    path('portal/requests/reject/<int:pk>/', reject_user, name='reject_user'),
+
     path('admin/', admin.site.urls),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='hotspot/login.html'), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),

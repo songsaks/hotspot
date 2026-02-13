@@ -1,0 +1,75 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Pending Approvals - 9Com Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pending-card { border: 1px solid #f1f5f9; transition: all 0.2s; }
+    .pending-card:hover { border-color: #0ea5e9; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    .info-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; }
+    .info-value { font-size: 0.85rem; font-weight: 800; color: #1e293b; }
+    
+    .approval-form { background: #f8fafc; border-radius: 12px; padding: 1rem; border: 1px solid #f1f5f9; }
+    .btn-approve { background: #10b981; color: white; border: none; font-weight: 700; border-radius: 8px; font-size: 0.75rem; padding: 0.5rem 1rem; }
+    .btn-reject { background: #fff1f2; color: #e11d48; border: 1px solid #ffe4e6; font-weight: 700; border-radius: 8px; font-size: 0.75rem; padding: 0.5rem 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="fw-800 mb-0">Registration Requests</h4>
+        <p class="text-muted text-small">Approve or reject users who registered via the hotspot portal</p>
+    </div>
+    <span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm">
+        <i class="fas fa-clock me-2"></i> {{ pending_users|length }} Pending Requests
+    </span>
+</div>
+
+<div class="row g-4">
+    {% for user in pending_users %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm pending-card">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <div class="info-label">Requested Account</div>
+                        <div class="info-value text-primary fs-5">{{ user.username }}</div>
+                        <div class="text-muted small"><i class="far fa-calendar-alt me-1"></i> {{ user.created_at|date:"d M Y H:i" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-label">Full Name & Contact</div>
+                        <div class="info-value">{{ user.full_name|default:"Not Provided" }}</div>
+                        <div class="text-muted small"><i class="fas fa-phone-alt me-1"></i> {{ user.phone|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <form action="{% url 'approve_user' user.pk %}" method="POST" class="approval-form d-flex align-items-center gap-3">
+                            {% csrf_token %}
+                            <div class="flex-grow-1">
+                                <label class="info-label">Assign Profile</label>
+                                <select name="groupname" class="form-select form-select-sm" required>
+                                    <option value="" disabled selected>Select a profile...</option>
+                                    {% for p in profiles %}
+                                        <option value="{{ p.groupname }}">{{ p.groupname }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="d-flex gap-2 align-items-end mt-3">
+                                <button type="submit" class="btn-approve">Approve</button>
+                                <a href="{% url 'reject_user' user.pk %}" class="btn-reject text-decoration-none" onclick="return confirm('Reject this request?')">Reject</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="opacity-10 mb-3"><i class="fas fa-user-clock fa-5x"></i></div>
+        <h5 class="text-muted fw-bold">No pending registration requests</h5>
+        <p class="text-muted">New requests from the hotspot portal will appear here</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

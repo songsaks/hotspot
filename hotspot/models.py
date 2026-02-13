@@ -77,3 +77,18 @@ class Radusergroup(models.Model):
     class Meta:
         managed = False
         db_table = 'radusergroup'
+
+
+class PendingUser(models.Model):
+    username = models.CharField(max_length=64, unique=True)
+    password = models.CharField(max_length=64)
+    full_name = models.CharField(max_length=100, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'pending_users'
+        managed = True
+
+    def __str__(self):
+        return self.username

@@ -5,12 +5,90 @@ from django.contrib.auth.decorators import login_required
 import pandas as pd
 import random
 import string
-from .models import Radcheck
+from .models import Radcheck, PendingUser
 from .forms import HotspotUserForm, UserImportForm
 
 @login_required
 def dashboard(request):
     return render(request, 'hotspot/dashboard.html')
+
+# ... existing code ...
+
+@login_required
+def registration_requests(request):
+    pending_users = PendingUser.objects.all().order_by('-created_at')
+    
+    # Get profiles for assignment
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        profiles = dictfetchall(cursor)
+        
+    return render(request, 'hotspot/registration_requests.html', {
+        'pending_users': pending_users,
+        'profiles': profiles
+    })
+
+@login_required
+def approve_user(request, pk):
+    pending = get_object_or_404(PendingUser, pk=pk)
+    if request.method == 'POST':
+        groupname = request.POST.get('groupname')
+        if groupname:
+            # 1. Create Radcheck entry
+            Radcheck.objects.update_or_create(
+                username=pending.username,
+                attribute='Cleartext-Password',
+                defaults={'op': ':=', 'value': pending.password}
+            )
+            
+            # 2. Assign to group
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM radusergroup WHERE username = %s", [pending.username])
+                cursor.execute(
+                    "INSERT INTO radusergroup (username, groupname, priority) VALUES (%s, %s, %s)",
+                    [pending.username, groupname, 1]
+                )
+            
+            # 3. Remove from pending
+            pending.delete()
+            messages.success(request, f"User '{pending.username}' approved and assigned to '{groupname}'.")
+        else:
+            messages.error(request, "Please select a profile.")
+    return redirect('registration_requests')
+
+@login_required
+def reject_user(request, pk):
+    pending = get_object_or_404(PendingUser, pk=pk)
+    pending.delete()
+    messages.warning(request, f"Registration request for '{pending.username}' has been rejected.")
+    return redirect('registration_requests')
+
+# This view is PUBLIC (no login required) - Called by Mikrotik
+def self_register(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        full_name = request.POST.get('full_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        
+        if not username or not password:
+            messages.error(request, "Username and Password are required.")
+            return render(request, 'hotspot/self_register.html')
+            
+        # Check if username already exists in either table
+        if Radcheck.objects.filter(username=username).exists() or PendingUser.objects.filter(username=username).exists():
+            messages.error(request, "Username already taken.")
+            return render(request, 'hotspot/self_register.html')
+            
+        PendingUser.objects.create(
+            username=username,
+            password=password,
+            full_name=full_name,
+            phone=phone
+        )
+        return render(request, 'hotspot/registration_success.html', {'username': username})
+        
+    return render(request, 'hotspot/self_register.html')
 
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"

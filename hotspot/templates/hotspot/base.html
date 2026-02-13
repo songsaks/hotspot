@@ -251,6 +251,12 @@
             <a href="{% url 'manage_vouchers' %}" class="nav-link {% if 'vouchers' in request.path %}active{% endif %}">
                 <i class="fas fa-ticket-alt"></i> Tickets (Voucher)
             </a>
+            <a href="{% url 'registration_requests' %}" class="nav-link {% if 'requests' in request.path %}active{% endif %} d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user-clock"></i> Register Requests</span>
+                {% if pending_count > 0 %}
+                    <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem;">{{ pending_count }}</span>
+                {% endif %}
+            </a>
             <a href="{% url 'user_import' %}" class="nav-link {% if 'import' in request.path %}active{% endif %}">
                 <i class="fas fa-cloud-upload-alt"></i> Bulk Import
             </a>
