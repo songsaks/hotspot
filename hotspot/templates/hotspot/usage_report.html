@@ -1,0 +1,74 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Usage Summary - 9Com Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card { border: 1px solid #f1f5f9; }
+    .stat-box {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #f1f5f9;
+        height: 100%;
+    }
+    .stat-value { font-size: 1.1rem; font-weight: 800; color: #1e293b; }
+    .stat-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="fw-800 mb-0">Usage Summary Report</h4>
+        <p class="text-muted text-small">Aggregated bandwidth and connection statistics per user</p>
+    </div>
+    <button onclick="window.print()" class="btn btn-light border btn-sm">
+        <i class="fas fa-print me-1"></i> Export PDF
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+            <thead>
+                <tr class="bg-light">
+                    <th class="ps-4 py-3" style="font-size: 0.65rem;">Username</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Total Sessions</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Time Online</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Total Download</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Total Upload</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Last Activity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in usage_data %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-800 text-dark">{{ row.username }}</div>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ row.total_sessions }}</span></td>
+                    <td>
+                        <div class="small fw-600 text-secondary">
+                            {{ row.total_time|floatformat:0 }} Seconds
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-primary fw-800">{{ row.total_download|filesizeformat }}</div>
+                    </td>
+                    <td>
+                        <div class="text-success fw-800">{{ row.total_upload|filesizeformat }}</div>
+                    </td>
+                    <td>
+                        <div class="text-muted text-small">{{ row.last_connected|date:"d M Y H:i" }}</div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-5 text-muted">No usage data recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

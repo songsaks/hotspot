@@ -15,54 +15,37 @@
     }
 
     .badge-limit {
-        background: #f1f5f9;
+        background: #f8fafc;
         color: #475569;
         font-size: 0.7rem;
-        padding: 0.2rem 0.5rem;
+        padding: 0.25rem 0.6rem;
         border-radius: 6px;
         font-weight: 700;
         display: inline-flex;
         align-items: center;
+        border: 1px solid #f1f5f9;
+        margin-bottom: 2px;
     }
 
     .user-pill {
-        background: #f8fafc;
-        border: 1px solid #f1f5f9;
-        color: #64748b;
-        padding: 0.15rem 0.6rem;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 0.15rem 0.5rem;
         border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin: 0.15rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin: 0.1rem;
         display: inline-flex;
         align-items: center;
     }
 
-    .remove-user {
-        color: #cbd5e1;
-        margin-left: 6px;
-        text-decoration: none;
-        transition: color 0.2s;
-    }
-
+    .remove-user { color: #94a3b8; margin-left: 5px; text-decoration: none; }
     .remove-user:hover { color: #f43f5e; }
 
-    .header-icon {
-        width: 28px;
-        height: 28px;
-        background: #f8fafc;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 10px;
-        color: #64748b;
-        font-size: 0.8rem;
-    }
-
     .action-btn {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -76,10 +59,31 @@
     .btn-delete { background: #fff1f2; color: #f43f5e; }
     .btn-delete:hover { background: #f43f5e; color: white; }
 
-    .table thead th {
+    .form-group-label {
         font-size: 0.7rem;
+        font-weight: 800;
         text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-group-label i { margin-right: 8px; color: #cbd5e1; }
+    
+    .config-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid #f1f5f9;
+    }
+
+    .input-group-text {
+        font-size: 0.75rem;
         font-weight: 700;
+        background: transparent;
+        border-left: none;
         color: #94a3b8;
     }
 </style>
@@ -87,78 +91,120 @@
 
 {% block content %}
 <div class="mb-4">
-    <h4 class="fw-800 mb-0">Profile Management</h4>
-    <p class="text-muted text-small">Configure bandwidth limits and session rules for user groups</p>
+    <h4 class="fw-800 mb-0">Profile & Policy Management</h4>
+    <p class="text-muted text-small">Define network constraints and session behaviors</p>
 </div>
 
 <div class="row g-4">
     <!-- Configuration Panels -->
     <div class="col-lg-4">
-        <div class="card mb-4 border-0 shadow-sm">
-            <div class="card-header d-flex align-items-center">
-                <div class="header-icon"><i class="fas fa-plus"></i></div>
-                New Profile
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <span class="fw-800 text-dark"><i class="fas fa-plus-circle me-2 text-primary"></i>Create New Profile</span>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-0">
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="create_profile" value="1">
-                    <div class="mb-3">
-                        <label class="form-label mb-1">Group Name</label>
-                        <input type="text" name="group_name" class="form-control" placeholder="e.g. Standard_User" required>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6 mb-3">
-                            <label class="form-label mb-1">Download</label>
-                            <div class="input-group">
-                                <input type="text" name="download_speed" class="form-control" placeholder="10" required>
-                                <span class="input-group-text p-1 px-2 border-0 bg-light text-small">M</span>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label mb-1">Upload</label>
-                            <div class="input-group">
-                                <input type="text" name="upload_speed" class="form-control" placeholder="5" required>
-                                <span class="input-group-text p-1 px-2 border-0 bg-light text-small">M</span>
-                            </div>
-                        </div>
-                    </div>
+                    
                     <div class="mb-4">
-                        <label class="form-label mb-1">Timeout (Hours)</label>
-                        <input type="number" name="session_timeout" class="form-control" value="24" required>
+                        <label class="form-label fw-bold small mb-1">Profile Name</label>
+                        <input type="text" name="group_name" class="form-control" placeholder="e.g. VIP_GUEST" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Create Profile</button>
+
+                    <!-- Network Speed -->
+                    <div class="config-section">
+                        <div class="form-group-label"><i class="fas fa-tachometer-alt"></i>Bandwidth limits</div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="text-small text-muted mb-1 d-block">Download</label>
+                                <div class="input-group">
+                                    <input type="text" name="download_speed" class="form-control" placeholder="10" required>
+                                    <span class="input-group-text">Mbps</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-small text-muted mb-1 d-block">Upload</label>
+                                <div class="input-group">
+                                    <input type="text" name="upload_speed" class="form-control" placeholder="5" required>
+                                    <span class="input-group-text">Mbps</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Session Constraints -->
+                    <div class="config-section">
+                        <div class="form-group-label"><i class="fas fa-user-clock"></i>Session Policies</div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="text-small text-muted mb-1 d-block">Session Timeout</label>
+                                <div class="input-group">
+                                    <input type="number" name="session_timeout" class="form-control" value="24" required>
+                                    <span class="input-group-text">HR</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-small text-muted mb-1 d-block">Idle-Timeout</label>
+                                <div class="input-group">
+                                    <input type="number" name="idle_timeout" class="form-control" value="10" required>
+                                    <span class="input-group-text">MIN</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="text-small text-muted mb-1 d-block">Devices</label>
+                                <div class="input-group">
+                                    <input type="number" name="simultaneous_sessions" class="form-control" value="1" min="1" required>
+                                    <span class="input-group-text">QTY</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-small text-muted mb-1 d-block">Data Quota</label>
+                                <div class="input-group">
+                                    <input type="number" name="data_quota" class="form-control" placeholder="Disk size">
+                                    <span class="input-group-text">MB</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 shadow-sm">
+                        <i class="fas fa-save me-2"></i>Save Profile
+                    </button>
                 </form>
             </div>
         </div>
 
         <div class="card border-0 shadow-sm">
-            <div class="card-header d-flex align-items-center">
-                <div class="header-icon"><i class="fas fa-link"></i></div>
-                Assign User
+            <div class="card-header bg-white py-3 border-0">
+                <span class="fw-800 text-dark"><i class="fas fa-user-plus me-2 text-success"></i>Quick User Link</span>
             </div>
-            <div class="card-body">
+            <div class="card-body pt-0">
                 <form action="{% url 'assign_user_group' %}" method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label mb-1">Select User</label>
+                        <label class="text-small text-muted mb-1 d-block">Select User</label>
                         <select name="username" class="form-select" required>
-                            <option value="" disabled selected>Choose...</option>
+                            <option value="" disabled selected>Select an account...</option>
                             {% for user in users %}
                                 <option value="{{ user.username }}">{{ user.username }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label mb-1">Assign to Profile</label>
+                        <label class="text-small text-muted mb-1 d-block">Target Profile</label>
                         <select name="groupname" class="form-select" required>
-                            <option value="" disabled selected>Choose...</option>
+                            <option value="" disabled selected>Select a group...</option>
                             {% for profile in profiles %}
                                 <option value="{{ profile.groupname }}">{{ profile.groupname }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" style="background:#059669; border:none;">Link User</button>
+                    <button type="submit" class="btn btn-success w-100 p-2 text-white fw-bold">
+                        <i class="fas fa-link me-2"></i>Assign Now
+                    </button>
                 </form>
             </div>
         </div>
@@ -166,61 +212,61 @@
 
     <!-- Profile Table -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white">
-                Active Profiles & Active Members
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <span class="fw-800 text-dark">Active Profiles & Members</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead>
                             <tr class="bg-light">
-                                <th class="ps-3 py-2">Group Name</th>
-                                <th class="py-2">Policy</th>
-                                <th class="py-2">Members</th>
-                                <th class="py-2 text-center">Actions</th>
+                                <th class="ps-4 py-2" style="font-size: 0.65rem;">Group Details</th>
+                                <th class="py-2" style="font-size: 0.65rem;">Resource Policy</th>
+                                <th class="py-2" style="font-size: 0.65rem;">Enrolled Members</th>
+                                <th class="py-2 text-center" style="font-size: 0.65rem;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for profile in profiles %}
                             <tr>
-                                <td class="ps-3">
-                                    <div class="fw-bold">{{ profile.groupname }}</div>
-                                    <div class="text-small text-muted">{{ profile.user_list|length }} accounts</div>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column gap-1">
-                                        <span class="badge-limit"><i class="fas fa-arrow-down me-1 text-primary"></i> {{ profile.speed }}</span>
-                                        <span class="badge-limit"><i class="fas fa-clock me-1 text-warning"></i> {{ profile.timeout }} H</span>
+                                <td class="ps-4">
+                                    <div class="fw-800 text-primary">{{ profile.groupname }}</div>
+                                    <div class="text-small text-muted mt-1">
+                                        <i class="fas fa-users-cog me-1"></i> {{ profile.user_list|length }} accounts
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="d-flex flex-wrap">
+                                    <div class="d-flex flex-column">
+                                        <div class="mb-1">
+                                            <span class="badge-limit" title="Speed Limit"><i class="fas fa-exchange-alt me-2 text-primary"></i> {{ profile.speed }}</span>
+                                            <span class="badge-limit" title="Data Quota"><i class="fas fa-database me-2 text-danger"></i> {{ profile.quota }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="badge-limit" title="Session Lifetime"><i class="far fa-clock me-2 text-warning"></i> {{ profile.timeout }} H</span>
+                                            <span class="badge-limit" title="Idle Cut-off"><i class="fas fa-moon me-2 text-secondary"></i> {{ profile.idle }} Min</span>
+                                            <span class="badge-limit" title="Max Devices"><i class="fas fa-mobile-alt me-2 text-info"></i> {{ profile.sessions }} Limit</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap" style="max-width: 250px;">
                                         {% for username in profile.user_list %}
-                                            <span class="user-pill">
-                                                {{ username|truncatechars:12 }}
-                                                <a href="{% url 'remove_user_from_group' username %}" class="remove-user" onclick="return confirm('Remove user from group?')">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
-                                            </span>
+                                            <span class="user-pill">{{ username|truncatechars:10 }}</span>
                                         {% empty %}
-                                            <span class="text-muted text-small italic">No assignments</span>
+                                            <span class="text-muted text-small opacity-50">Empty Group</span>
                                         {% endfor %}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="d-flex justify-content-center gap-1">
-                                        <a href="{% url 'edit_profile' profile.groupname %}" class="action-btn btn-edit" title="Edit">
-                                            <i class="fas fa-pencil-alt"></i>
-                                        </a>
-                                        <a href="{% url 'delete_profile' profile.groupname %}" class="action-btn btn-delete" title="Delete" onclick="return confirm('Delete this profile?')">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                    <div class="d-flex justify-content-center gap-2 mt-1">
+                                        <a href="{% url 'edit_profile' profile.groupname %}" class="action-btn btn-edit" title="Settings"><i class="fas fa-cog"></i></a>
+                                        <a href="{% url 'delete_profile' profile.groupname %}" class="action-btn btn-delete" title="Remove" onclick="return confirm('Delete profile?')"><i class="fas fa-trash-alt"></i></a>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="text-center py-5 text-muted">No profiles defined.</td></tr>
+                            <tr><td colspan="4" class="text-center py-5 text-muted">No configuration profiles found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>

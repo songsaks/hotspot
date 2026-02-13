@@ -1,8 +1,10 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import connection
 from django.contrib.auth.decorators import login_required
 import pandas as pd
+import random
+import string
 from .models import Radcheck
 from .forms import HotspotUserForm, UserImportForm
 
@@ -20,9 +22,131 @@ def dictfetchall(cursor):
 
 @login_required
 def user_list(request):
-    # ดึงข้อมูลจากฐานข้อมูลบน VPS
-    users = Radcheck.objects.all().order_by('-id')[:100] # Show last 100
-    return render(request, 'hotspot/user_list.html', {'users': users})
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT rc.id, rc.username, rc.value as password, rug.groupname 
+            FROM radcheck rc
+            LEFT JOIN radusergroup rug ON rc.username = rug.username
+            ORDER BY rc.id DESC LIMIT 100
+        """)
+        users = dictfetchall(cursor)
+        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        profiles = dictfetchall(cursor)
+
+    return render(request, 'hotspot/user_list.html', {
+        'users': users,
+        'profiles': profiles
+    })
+
+@login_required
+def active_sessions(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT radacctid, username, framedipaddress, nasipaddress, 
+                   acctstarttime, acctsessiontime, acctinputoctets, acctoutputoctets, callingstationid
+            FROM radacct 
+            WHERE acctstoptime IS NULL 
+            ORDER BY acctstarttime DESC
+        """)
+        active_users = dictfetchall(cursor)
+    
+    return render(request, 'hotspot/active_sessions.html', {'sessions': active_users})
+
+@login_required
+def usage_report(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                username, 
+                COUNT(*) as total_sessions,
+                SUM(acctsessiontime) as total_time,
+                SUM(acctinputoctets) as total_download,
+                SUM(acctoutputoctets) as total_upload,
+                MAX(acctstarttime) as last_connected
+            FROM radacct
+            GROUP BY username
+            ORDER BY last_connected DESC
+        """)
+        usage_data = dictfetchall(cursor)
+    
+    return render(request, 'hotspot/usage_report.html', {'usage_data': usage_data})
+
+@login_required
+def manage_vouchers(request):
+    with connection.cursor() as cursor:
+        if request.method == 'POST' and 'generate' in request.POST:
+            prefix = request.POST.get('prefix', 'VIP').strip()
+            count = int(request.POST.get('count', '1'))
+            groupname = request.POST.get('groupname')
+            
+            created_vouchers = []
+            for _ in range(count):
+                random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+                username = f"{prefix}{random_str}"
+                password = ''.join(random.choices(string.digits, k=4))
+                
+                Radcheck.objects.create(username=username, attribute='Cleartext-Password', op=':=', value=password)
+                cursor.execute("INSERT INTO radusergroup (username, groupname, priority) VALUES (%s, %s, %s)", [username, groupname, 1])
+                created_vouchers.append({'user': username, 'pass': password})
+            
+            messages.success(request, f"Generated {count} temporary tickets for {groupname}")
+            return render(request, 'hotspot/voucher_print.html', {'vouchers': created_vouchers, 'profile': groupname})
+
+        # Cleanup logic
+        if 'cleanup' in request.GET:
+            prefix = request.GET.get('prefix', '').strip()
+            if len(prefix) < 2:
+                messages.error(request, "Please provide a specific prefix (at least 2 characters) to clean up.")
+            else:
+                cursor.execute("""
+                    SELECT DISTINCT username FROM radacct 
+                    WHERE acctstoptime IS NOT NULL AND username LIKE %s
+                """, [f"{prefix}%"])
+                expired_users = [row[0] for row in cursor.fetchall()]
+
+                if expired_users:
+                    format_strings = ','.join(['%s'] * len(expired_users))
+                    cursor.execute(f"DELETE FROM radusergroup WHERE username IN ({format_strings})", expired_users)
+                    cursor.execute(f"DELETE FROM radcheck WHERE username IN ({format_strings})", expired_users)
+                    messages.info(request, f"Cleaned up {len(expired_users)} expired tickets starting with '{prefix}'.")
+                else:
+                    messages.info(request, f"No expired tickets found starting with '{prefix}'.")
+            return redirect('manage_vouchers')
+
+        # Get existing vouchers and their status
+        # We define vouchers as users having the current prefix in the search (default 'VIP')
+        current_prefix = request.GET.get('view_prefix', 'VIP')
+        cursor.execute("""
+            SELECT rc.username, rug.groupname,
+                   (SELECT MAX(acctstoptime) FROM radacct ra WHERE ra.username = rc.username) as stop_time,
+                   (SELECT COUNT(*) FROM radacct ra WHERE ra.username = rc.username AND ra.acctstoptime IS NULL) as is_online
+            FROM radcheck rc
+            JOIN radusergroup rug ON rc.username = rug.username
+            WHERE rc.username LIKE %s
+            ORDER BY rc.id DESC
+        """, [f"{current_prefix}%"])
+        vouchers_list = dictfetchall(cursor)
+
+        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        profiles = dictfetchall(cursor)
+
+    return render(request, 'hotspot/vouchers.html', {
+        'profiles': profiles, 
+        'vouchers_list': vouchers_list,
+        'current_prefix': current_prefix
+    })
+
+@login_required
+def kick_user(request, username):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE radacct 
+            SET acctstoptime = NOW(), 
+                acctterminatecause = 'Admin-Reset'
+            WHERE username = %s AND acctstoptime IS NULL
+        """, [username])
+    messages.success(request, f"User '{username}' disconnected.")
+    return redirect('active_sessions')
 
 @login_required
 def user_create(request):
@@ -91,10 +215,7 @@ def user_import(request):
                                     [username, selected_profile, 1]
                                 )
                 
-                msg = f'Successfully imported {count} users'
-                if selected_profile:
-                    msg += f' and assigned to profile "{selected_profile}"'
-                messages.success(request, msg + '.')
+                messages.success(request, f'Successfully imported {count} users.')
                 return redirect('user_list')
             except Exception as e:
                 messages.error(request, f'Error processing file: {str(e)}')
@@ -108,158 +229,143 @@ def manage_profiles(request):
     with connection.cursor() as cursor:
         if request.method == 'POST' and 'create_profile' in request.POST:
             group_name = request.POST.get('group_name')
-            dl_speed = request.POST.get('download_speed') # e.g. 2M
-            ul_speed = request.POST.get('upload_speed')   # e.g. 1M
-            timeout_hours = request.POST.get('session_timeout') # Hours
-            
+            dl_speed = request.POST.get('download_speed', '').strip()
+            ul_speed = request.POST.get('upload_speed', '').strip()
+            timeout_hours = request.POST.get('session_timeout', '24')
+            sim_sessions = request.POST.get('simultaneous_sessions', '1')
+            idle_timeout = request.POST.get('idle_timeout', '10')
+            data_quota_mb = request.POST.get('data_quota', '').strip()
+
+            if dl_speed.isdigit(): dl_speed += 'M'
+            if ul_speed.isdigit(): ul_speed += 'M'
             rate_limit = f"{ul_speed}/{dl_speed}"
             
             try:
-                timeout_seconds = int(timeout_hours) * 3600
-                # Insert Rate Limit
-                cursor.execute(
-                    "INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)",
-                    [group_name, 'Mikrotik-Rate-Limit', ':=', rate_limit]
-                )
-                # Insert Session Timeout
-                cursor.execute(
-                    "INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)",
-                    [group_name, 'Session-Timeout', ':=', str(timeout_seconds)]
-                )
-                messages.success(request, f"Profile '{group_name}' created successfully!")
+                cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [group_name, 'Mikrotik-Rate-Limit', ':=', rate_limit])
+                cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [group_name, 'Session-Timeout', ':=', str(int(timeout_hours)*3600)])
+                cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [group_name, 'Simultaneous-Use', ':=', sim_sessions])
+                cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [group_name, 'Idle-Timeout', ':=', str(int(idle_timeout)*60)])
+                if data_quota_mb and data_quota_mb.isdigit():
+                    bytes_quota = int(data_quota_mb) * 1024 * 1024
+                    cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [group_name, 'Mikrotik-Total-Limit', ':=', str(bytes_quota)])
+                messages.success(request, f"Profile '{group_name}' created.")
             except Exception as e:
-                messages.error(request, f"Error creating profile: {str(e)}")
+                messages.error(request, f"Error: {str(e)}")
             return redirect('manage_profiles')
 
-        # Get all profiles with their values
         cursor.execute("SELECT groupname, attribute, value FROM radgroupreply")
         reply_rows = dictfetchall(cursor)
-        
         profiles_dict = {}
         for row in reply_rows:
-            gn = row['groupname']
-            attr = row['attribute']
-            val = row['value']
+            gn, attr, val = row['groupname'], row['attribute'], row['value']
             if gn not in profiles_dict:
-                profiles_dict[gn] = {'groupname': gn, 'speed': 'N/A', 'timeout': 'N/A'}
-            
-            if attr == 'Mikrotik-Rate-Limit':
-                profiles_dict[gn]['speed'] = val
-            elif attr == 'Session-Timeout':
-                try:
-                    profiles_dict[gn]['timeout'] = int(val) // 3600
-                except:
-                    profiles_dict[gn]['timeout'] = val
+                profiles_dict[gn] = {'groupname': gn, 'speed': 'N/A', 'timeout': 'N/A', 'sessions': '1', 'idle': 'N/A', 'quota': 'Unlimited'}
+            if attr == 'Mikrotik-Rate-Limit': profiles_dict[gn]['speed'] = val
+            elif attr == 'Session-Timeout': profiles_dict[gn]['timeout'] = int(val) // 3600
+            elif attr == 'Simultaneous-Use': profiles_dict[gn]['sessions'] = val
+            elif attr == 'Idle-Timeout': profiles_dict[gn]['idle'] = int(val) // 60
+            elif attr == 'Mikrotik-Total-Limit': profiles_dict[gn]['quota'] = f"{int(val) // (1024*1024)} MB"
         
         profiles = list(profiles_dict.values())
-        
-        # Get users in each group
         cursor.execute("SELECT groupname, username FROM radusergroup")
         user_group_rows = dictfetchall(cursor)
-        
         group_users = {}
         for row in user_group_rows:
-            gn = row['groupname']
-            un = row['username']
-            if gn not in group_users:
-                group_users[gn] = []
+            gn, un = row['groupname'], row['username']
+            if gn not in group_users: group_users[gn] = []
             group_users[gn].append(un)
-            
-        for p in profiles:
-            p['user_list'] = group_users.get(p['groupname'], [])
-        
-        # Get all users for assignment dropdown
+        for p in profiles: p['user_list'] = group_users.get(p['groupname'], [])
         cursor.execute("SELECT DISTINCT username FROM radcheck")
         users = dictfetchall(cursor)
 
-    return render(request, 'hotspot/profile_manager.html', {
-        'profiles': profiles,
-        'users': users
-    })
+    return render(request, 'hotspot/profile_manager.html', {'profiles': profiles, 'users': users})
 
 @login_required
 def edit_profile(request, groupname):
     with connection.cursor() as cursor:
         if request.method == 'POST':
-            dl_speed = request.POST.get('download_speed')
-            ul_speed = request.POST.get('upload_speed')
-            timeout_hours = request.POST.get('session_timeout')
+            dl_speed = request.POST.get('download_speed', '').strip()
+            ul_speed = request.POST.get('upload_speed', '').strip()
+            timeout_hours = request.POST.get('session_timeout', '24')
+            sim_sessions = request.POST.get('simultaneous_sessions', '1')
+            idle_timeout = request.POST.get('idle_timeout', '10')
+            data_quota_mb = request.POST.get('data_quota', '').strip()
+            
+            if dl_speed.isdigit(): dl_speed += 'M'
+            if ul_speed.isdigit(): ul_speed += 'M'
             rate_limit = f"{ul_speed}/{dl_speed}"
-            timeout_seconds = int(timeout_hours) * 3600
             
             try:
-                # Update Mikrotik-Rate-Limit
-                cursor.execute(
-                    "UPDATE radgroupreply SET value = %s WHERE groupname = %s AND attribute = 'Mikrotik-Rate-Limit'",
-                    [rate_limit, groupname]
-                )
-                # Update Session-Timeout
-                cursor.execute(
-                    "UPDATE radgroupreply SET value = %s WHERE groupname = %s AND attribute = 'Session-Timeout'",
-                    [str(timeout_seconds), groupname]
-                )
-                messages.success(request, f"Profile '{groupname}' updated successfully!")
+                cursor.execute("UPDATE radgroupreply SET value = %s WHERE groupname = %s AND attribute = 'Mikrotik-Rate-Limit'", [rate_limit, groupname])
+                cursor.execute("UPDATE radgroupreply SET value = %s WHERE groupname = %s AND attribute = 'Session-Timeout'", [str(int(timeout_hours)*3600), groupname])
+                for attr, val in [('Simultaneous-Use', sim_sessions), ('Idle-Timeout', str(int(idle_timeout)*60))]:
+                    cursor.execute("SELECT id FROM radgroupreply WHERE groupname = %s AND attribute = %s", [groupname, attr])
+                    if cursor.fetchone():
+                        cursor.execute("UPDATE radgroupreply SET value = %s WHERE groupname = %s AND attribute = %s", [val, groupname, attr])
+                    else:
+                        cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [groupname, attr, ':=', val])
+                
+                cursor.execute("SELECT id FROM radgroupreply WHERE groupname = %s AND attribute = 'Mikrotik-Total-Limit'", [groupname])
+                exists = cursor.fetchone()
+                if data_quota_mb and data_quota_mb.isdigit():
+                    val = str(int(data_quota_mb) * 1024 * 1024)
+                    if exists: cursor.execute("UPDATE radgroupreply SET value = %s WHERE groupname = %s AND attribute = 'Mikrotik-Total-Limit'", [val, groupname])
+                    else: cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [groupname, 'Mikrotik-Total-Limit', ':=', val])
+                elif exists:
+                    cursor.execute("DELETE FROM radgroupreply WHERE groupname = %s AND attribute = 'Mikrotik-Total-Limit'", [groupname])
+
+                messages.success(request, f"Profile '{groupname}' updated.")
             except Exception as e:
-                messages.error(request, f"Error updating profile: {str(e)}")
+                messages.error(request, f"Error: {str(e)}")
             return redirect('manage_profiles')
 
-        # Fetch current values for editing
         cursor.execute("SELECT attribute, value FROM radgroupreply WHERE groupname = %s", [groupname])
         rows = dictfetchall(cursor)
-        
-        data = {'groupname': groupname, 'dl': '', 'ul': '', 'timeout': ''}
+        data = {'groupname': groupname, 'dl': '', 'ul': '', 'timeout': '24', 'sessions': '1', 'idle': '10', 'quota': ''}
         for row in rows:
-            if row['attribute'] == 'Mikrotik-Rate-Limit':
-                if '/' in row['value']:
-                    data['ul'], data['dl'] = row['value'].split('/')
-                else:
-                    data['dl'] = row['value']
-            elif row['attribute'] == 'Session-Timeout':
-                try:
-                    data['timeout'] = int(row['value']) // 3600
-                except:
-                    data['timeout'] = row['value']
+            attr, val = row['attribute'], row['value']
+            if attr == 'Mikrotik-Rate-Limit':
+                if '/' in val: data['ul'], data['dl'] = val.split('/')
+                else: data['dl'] = val
+            elif attr == 'Session-Timeout': data['timeout'] = int(val) // 3600
+            elif attr == 'Simultaneous-Use': data['sessions'] = val
+            elif attr == 'Idle-Timeout': data['idle'] = int(val) // 60
+            elif attr == 'Mikrotik-Total-Limit': data['quota'] = int(val) // (1024 * 1024)
     
     return render(request, 'hotspot/profile_edit.html', {'data': data})
 
 @login_required
 def delete_profile(request, groupname):
     with connection.cursor() as cursor:
-        # Delete from radgroupreply
         cursor.execute("DELETE FROM radgroupreply WHERE groupname = %s", [groupname])
-        # Also remove users from this group
         cursor.execute("DELETE FROM radusergroup WHERE groupname = %s", [groupname])
-    messages.success(request, f"Profile '{groupname}' and its assignments have been deleted.")
+    messages.success(request, f"Profile '{groupname}' deleted.")
     return redirect('manage_profiles')
 
 @login_required
 def remove_user_from_group(request, username):
     with connection.cursor() as cursor:
         cursor.execute("DELETE FROM radusergroup WHERE username = %s", [username])
-    messages.success(request, f"User '{username}' has been removed from the profile group.")
+    messages.success(request, f"User '{username}' removed from group.")
     return redirect('manage_profiles')
 
 @login_required
 def assign_user_group(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        groupname = request.POST.get('groupname')
-        
+        username, groupname = request.POST.get('username'), request.POST.get('groupname')
         with connection.cursor() as cursor:
-            # Check if assignment exists
             cursor.execute("SELECT username FROM radusergroup WHERE username = %s", [username])
-            exists = cursor.fetchone()
-            
-            if exists:
-                cursor.execute(
-                    "UPDATE radusergroup SET groupname = %s WHERE username = %s",
-                    [groupname, username]
-                )
+            if cursor.fetchone():
+                cursor.execute("UPDATE radusergroup SET groupname = %s WHERE username = %s", [groupname, username])
             else:
-                cursor.execute(
-                    "INSERT INTO radusergroup (username, groupname, priority) VALUES (%s, %s, %s)",
-                    [username, groupname, 1]
-                )
-        
-        messages.success(request, f"User '{username}' assigned to group '{groupname}'")
-    return redirect('manage_profiles')
+                cursor.execute("INSERT INTO radusergroup (username, groupname, priority) VALUES (%s, %s, %s)", [username, groupname, 1])
+        messages.success(request, f"User '{username}' assigned to '{groupname}'")
+    return redirect(request.META.get('HTTP_REFERER', 'manage_profiles'))
+
+@login_required
+def delete_user(request, username):
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM radcheck WHERE username = %s", [username])
+        cursor.execute("DELETE FROM radusergroup WHERE username = %s", [username])
+    messages.success(request, f"User '{username}' deleted.")
+    return redirect('user_list')

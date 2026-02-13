@@ -1,0 +1,147 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Ticket Management - 9Com Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-pill {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    .status-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .status-expired { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .status-unused { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    .cleanup-box {
+        background: #fff1f2;
+        border: 1px solid #ffe4e6;
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    
+    .voucher-table thead th {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        background: #f8fafc;
+        color: #64748b;
+        padding: 0.75rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="fw-800 mb-0">Temporary Tickets (Vouchers)</h4>
+        <p class="text-muted text-small">Generate random credentials and monitor their usage status</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Actions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <span class="fw-800 text-dark"><i class="fas fa-magic me-2 text-primary"></i>Generate Tickets</span>
+            </div>
+            <div class="card-body pt-0">
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="generate" value="1">
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Prefix</label>
+                        <input type="text" name="prefix" class="form-control" value="{{ current_prefix }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Quantity (1-50)</label>
+                        <input type="number" name="count" class="form-control" value="5" min="1" max="50">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Access Profile</label>
+                        <select name="groupname" class="form-select" required>
+                            {% for p in profiles %}
+                                <option value="{{ p.groupname }}">{{ p.groupname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="fas fa-print me-2"></i>Generate & Print
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="cleanup-box">
+            <h6 class="fw-800 text-danger mb-2"><i class="fas fa-broom me-2"></i>Smart Cleanup</h6>
+            <p class="text-muted text-small mb-3">
+                Permanently delete vouchers that have finished their session.
+            </p>
+            <form method="GET">
+                <input type="hidden" name="cleanup" value="1">
+                <div class="input-group">
+                    <input type="text" name="prefix" class="form-control form-control-sm" value="{{ current_prefix }}" placeholder="Prefix">
+                    <button type="submit" class="btn btn-danger btn-sm px-3" onclick="return confirm('Delete all expired vouchers starting with this prefix?')">Clear Expired</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Monitoring List -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-800 text-dark">Existing Vouchers</span>
+                <form method="GET" class="d-flex gap-2">
+                    <input type="text" name="view_prefix" class="form-control form-control-sm" value="{{ current_prefix }}" placeholder="Search prefix..." style="width: 120px;">
+                    <button type="submit" class="btn btn-light border btn-sm">Filter</button>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0 voucher-table align-middle">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Username</th>
+                            <th>Profile</th>
+                            <th>Status</th>
+                            <th>Last Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in vouchers_list %}
+                        <tr>
+                            <td class="ps-4"><span class="fw-800 text-dark">{{ v.username }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ v.groupname }}</span></td>
+                            <td>
+                                {% if v.is_online > 0 %}
+                                    <span class="status-pill status-active">Online</span>
+                                {% elif v.stop_time %}
+                                    <span class="status-pill status-expired">Expired</span>
+                                {% else %}
+                                    <span class="status-pill status-unused">Not Used</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">
+                                {% if v.stop_time %}
+                                    {{ v.stop_time|date:"d M H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-5 text-muted">No vouchers found for this prefix.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

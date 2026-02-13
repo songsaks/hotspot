@@ -1,0 +1,125 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}Live Sessions - 9Com Cloud{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    .status-online { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    
+    .session-card {
+        border: 1px solid #f1f5f9;
+        transition: all 0.2s;
+    }
+    
+    .ip-label {
+        font-family: 'Courier New', Courier, monospace;
+        background: #f8fafc;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .data-usage {
+        font-size: 0.7rem;
+        color: #94a3b8;
+    }
+    
+    .data-usage b { color: #475569; }
+
+    .kick-btn {
+        background: #fff1f2;
+        color: #e11d48;
+        border: 1px solid #ffe4e6;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 0.35rem 0.8rem;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .kick-btn:hover {
+        background: #e11d48;
+        color: white;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-800 mb-0">Live Sessions</h4>
+        <p class="text-muted text-small">Monitor active users connected to the hotspot Network</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-light text-dark border">
+            <i class="fas fa-sync fa-spin me-2 text-primary"></i> Real-time Tracking
+        </span>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+            <thead>
+                <tr class="bg-light">
+                    <th class="ps-4 py-3" style="font-size: 0.65rem;">User Details</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Connection Info</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Traffic Usage</th>
+                    <th class="py-3" style="font-size: 0.65rem;">Start Time</th>
+                    <th class="py-3 text-center" style="font-size: 0.65rem;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon me-3" style="width: 32px; height: 32px; font-size: 0.8rem; background: #f0f9ff; color: #0369a1;">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <div>
+                                <div class="fw-800 text-dark">{{ session.username }}</div>
+                                <div class="status-badge status-online d-inline-block mt-1">Online</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="mb-1"><span class="ip-label">IP: {{ session.framedipaddress }}</span></div>
+                        <div><small class="text-muted">MAC: {{ session.callingstationid }}</small></div>
+                    </td>
+                    <td>
+                        <div class="data-usage"><i class="fas fa-arrow-up text-success me-1"></i> Upload: <b>{{ session.acctoutputoctets|filesizeformat }}</b></div>
+                        <div class="data-usage mt-1"><i class="fas fa-arrow-down text-primary me-2"></i> Download: <b>{{ session.acctinputoctets|filesizeformat }}</b></div>
+                    </td>
+                    <td>
+                        <div class="text-dark fw-600 small">{{ session.acctstarttime|date:"d M Y" }}</div>
+                        <div class="text-muted text-small">{{ session.acctstarttime|date:"H:i:s" }}</div>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'kick_user' session.username %}" class="kick-btn text-decoration-none" onclick="return confirm('Disconnect this user session?')">
+                            <i class="fas fa-sign-out-alt me-1"></i> Kick User
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5">
+                        <div class="opacity-25 mb-3"><i class="fas fa-user-slash fa-3x"></i></div>
+                        <p class="text-muted fw-bold">No active sessions found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

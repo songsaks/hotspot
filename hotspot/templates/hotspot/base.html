@@ -242,6 +242,15 @@
             <a href="{% url 'user_list' %}" class="nav-link {% if 'users' in request.path and 'import' not in request.path %}active{% endif %}">
                 <i class="fas fa-user-friends"></i> Hotspot Users
             </a>
+            <a href="{% url 'active_sessions' %}" class="nav-link {% if 'sessions' in request.path %}active{% endif %}">
+                <i class="fas fa-satellite-dish"></i> Live Sessions
+            </a>
+            <a href="{% url 'usage_report' %}" class="nav-link {% if 'reports' in request.path %}active{% endif %}">
+                <i class="fas fa-chart-line"></i> Usage Report
+            </a>
+            <a href="{% url 'manage_vouchers' %}" class="nav-link {% if 'vouchers' in request.path %}active{% endif %}">
+                <i class="fas fa-ticket-alt"></i> Tickets (Voucher)
+            </a>
             <a href="{% url 'user_import' %}" class="nav-link {% if 'import' in request.path %}active{% endif %}">
                 <i class="fas fa-cloud-upload-alt"></i> Bulk Import
             </a>
