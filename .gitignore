@@ -17,7 +17,7 @@ db.sqlite3
 local_settings.py
 
 # Media and Static
-/static/
+#static/
 /media/
 
 # OS-specific files
