@@ -7,7 +7,8 @@ from hotspot.views import (
     delete_profile, remove_user_from_group,
     edit_profile, dashboard, active_sessions, 
     kick_user, delete_user, usage_report, manage_vouchers,
-    self_register, registration_requests, approve_user, reject_user
+    self_register, registration_requests, approve_user, reject_user,
+    member_directory
 )
 
 from django.views.generic import RedirectView
@@ -21,6 +22,7 @@ urlpatterns = [
     path('portal/requests/', registration_requests, name='registration_requests'),
     path('portal/requests/approve/<int:pk>/', approve_user, name='approve_user'),
     path('portal/requests/reject/<int:pk>/', reject_user, name='reject_user'),
+    path('portal/members/', member_directory, name='member_directory'),
 
     path('admin/', admin.site.urls),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='hotspot/login.html'), name='login'),

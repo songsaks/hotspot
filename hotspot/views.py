@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 import pandas as pd
 import random
 import string
-from .models import Radcheck, PendingUser
+from .models import Radcheck, PendingUser, ApprovedUser
 from .forms import HotspotUserForm, UserImportForm
 
 @login_required
@@ -49,7 +49,16 @@ def approve_user(request, pk):
                     [pending.username, groupname, 1]
                 )
             
-            # 3. Remove from pending
+            # 3. Save to ApprovedUser for tracking
+            ApprovedUser.objects.update_or_create(
+                username=pending.username,
+                defaults={
+                    'full_name': pending.full_name,
+                    'phone': pending.phone
+                }
+            )
+            
+            # 4. Remove from pending
             pending.delete()
             messages.success(request, f"User '{pending.username}' approved and assigned to '{groupname}'.")
         else:
@@ -90,6 +99,11 @@ def self_register(request):
         
     return render(request, 'hotspot/self_register.html')
 
+@login_required
+def member_directory(request):
+    members = ApprovedUser.objects.all().order_by('-approved_at')
+    return render(request, 'hotspot/member_directory.html', {'members': members})
+
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
@@ -102,9 +116,10 @@ def dictfetchall(cursor):
 def user_list(request):
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT rc.id, rc.username, rc.value as password, rug.groupname 
+            SELECT rc.id, rc.username, rc.value as password, rug.groupname, au.id as is_self_reg
             FROM radcheck rc
             LEFT JOIN radusergroup rug ON rc.username = rug.username
+            LEFT JOIN approved_users au ON rc.username = au.username
             ORDER BY rc.id DESC LIMIT 100
         """)
         users = dictfetchall(cursor)
@@ -445,5 +460,6 @@ def delete_user(request, username):
     with connection.cursor() as cursor:
         cursor.execute("DELETE FROM radcheck WHERE username = %s", [username])
         cursor.execute("DELETE FROM radusergroup WHERE username = %s", [username])
+        cursor.execute("DELETE FROM approved_users WHERE username = %s", [username])
     messages.success(request, f"User '{username}' deleted.")
     return redirect('user_list')

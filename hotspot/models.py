@@ -92,3 +92,17 @@ class PendingUser(models.Model):
 
     def __str__(self):
         return self.username
+
+
+class ApprovedUser(models.Model):
+    username = models.CharField(max_length=64, unique=True)
+    full_name = models.CharField(max_length=100, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'approved_users'
+        managed = True
+
+    def __str__(self):
+        return self.username
