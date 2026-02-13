@@ -131,6 +131,9 @@
         <a href="{% url 'active_sessions' %}" class="btn btn-primary btn-sm d-flex align-items-center" style="background: #10b981; border:none;">
             <i class="fas fa-satellite-dish me-2"></i> Live Monitor
         </a>
+        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal">
+            <i class="fas fa-trash-alt me-1"></i> Bulk Delete
+        </button>
         <a href="{% url 'user_create' %}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus me-1"></i> Add User
         </a>
@@ -142,7 +145,10 @@
         <table class="table mb-0">
             <thead>
                 <tr>
-                    <th class="ps-4">User Details</th>
+                    <th class="ps-4" style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" id="selectAll">
+                    </th>
+                    <th>User Details</th>
                     <th>Password</th>
                     <th>Active Profile</th>
                     <th class="text-center">Status</th>
@@ -152,7 +158,10 @@
             <tbody>
                 {% for user in users %}
                 <tr {% if user.is_disabled %}style="background-color: #fffafb;"{% endif %}>
-                    <td class="ps-4">
+                    <td class="ps-4 text-center">
+                        <input type="checkbox" class="form-check-input user-checkbox" name="selected_users" value="{{ user.username }}">
+                    </td>
+                    <td>
                         <div class="d-flex align-items-center">
                             <div class="user-avatar {% if user.is_disabled %}bg-light text-muted{% endif %}">
                                 <i class="fas fa-user"></i>
@@ -243,7 +252,91 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Bulk Delete Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-800">Bulk Delete Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'bulk_delete_users' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body py-4">
+                    <div id="selectionStatus" class="alert alert-info py-2 mb-4 d-none" style="border-radius: 12px; border: none; font-size: 0.8rem;">
+                        <i class="fas fa-check-circle me-2"></i> <strong><span id="selectedCount">0</span> users</strong> selected manually.
+                        <input type="hidden" name="manual_selection" id="manualSelectionInput" value="">
+                    </div>
+
+                    <div id="criteriaSection">
+                        <p class="text-muted small mb-4">Or delete users matching specific criteria:</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Username Prefix</label>
+                            <input type="text" name="prefix" class="form-control" placeholder="e.g. VIP">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Username Exact Length</label>
+                            <input type="number" name="user_length" class="form-control" placeholder="e.g. 8">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 pt-3 border-top">
+                        <label class="form-label small fw-bold text-danger">Confirm Super Password</label>
+                        <input type="password" name="confirm_password" class="form-control border-danger-subtle" placeholder="Enter super password to confirm" required>
+                        <div class="form-text text-danger" style="font-size: 0.7rem;">This action cannot be undone. All WiFi access, profiles, and registration records for matching users will be deleted.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light btn-sm fw-bold px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm fw-bold px-4" style="background: #f43f5e; border: none;">Delete Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+// Bulk Selection Logic
+const selectAll = document.getElementById('selectAll');
+const userCheckboxes = document.querySelectorAll('.user-checkbox');
+const selectionStatus = document.getElementById('selectionStatus');
+const selectedCount = document.getElementById('selectedCount');
+const manualSelectionInput = document.getElementById('manualSelectionInput');
+const criteriaSection = document.getElementById('criteriaSection');
+
+function updateSelection() {
+    const selected = Array.from(userCheckboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+    
+    if (selected.length > 0) {
+        selectionStatus.classList.remove('d-none');
+        selectedCount.textContent = selected.length;
+        manualSelectionInput.value = selected.join(',');
+        criteriaSection.classList.add('opacity-50');
+        // Disable criteria inputs if manual selection is active
+        criteriaSection.querySelectorAll('input').forEach(i => i.disabled = true);
+    } else {
+        selectionStatus.classList.add('d-none');
+        manualSelectionInput.value = '';
+        criteriaSection.classList.remove('opacity-50');
+        criteriaSection.querySelectorAll('input').forEach(i => i.disabled = false);
+    }
+}
+
+if (selectAll) {
+    selectAll.addEventListener('change', () => {
+        userCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateSelection();
+    });
+}
+
+userCheckboxes.forEach(cb => {
+    cb.addEventListener('change', updateSelection);
+});
+
 function autocomplete(inp) {
   var currentFocus;
   inp.addEventListener("input", function(e) {

@@ -166,3 +166,33 @@ INFO 2026-02-13 16:14:28,772 autoreload 13468 35588 D:\DjangoProjects\ninecom_ho
 INFO 2026-02-13 16:14:29,655 autoreload 29412 32760 Watching for file changes with StatReloader
 INFO 2026-02-13 16:14:39,943 autoreload 29412 32760 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
 INFO 2026-02-13 16:14:39,946 autoreload 20376 34956 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
+INFO 2026-02-13 17:16:11,910 autoreload 30912 28200 Watching for file changes with StatReloader
+INFO 2026-02-13 17:16:15,805 log 30912 33520 "GET /users/ HTTP/1.1" 200 187757
+INFO 2026-02-13 17:17:10,373 log 30912 33520 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:17:11,003 log 30912 33520 "GET /users/ HTTP/1.1" 200 188165
+INFO 2026-02-13 17:17:18,018 log 30912 33520 "GET /users/ HTTP/1.1" 200 187757
+INFO 2026-02-13 17:18:37,366 log 30912 33520 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:18:38,027 log 30912 33520 "GET /users/ HTTP/1.1" 200 188165
+INFO 2026-02-13 17:18:45,988 log 30912 33520 "GET /users/ HTTP/1.1" 200 187757
+INFO 2026-02-13 17:19:15,156 log 30912 33520 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:19:15,821 log 30912 33520 "GET /users/ HTTP/1.1" 200 188165
+INFO 2026-02-13 17:19:26,056 log 30912 33520 "GET /users/ HTTP/1.1" 200 187757
+INFO 2026-02-13 17:19:52,187 log 30912 33520 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:19:52,865 log 30912 33520 "GET /users/ HTTP/1.1" 200 188165
+INFO 2026-02-13 17:20:04,714 log 30912 33520 "GET /users/ HTTP/1.1" 200 187757
+INFO 2026-02-13 17:21:48,774 autoreload 30912 28200 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-13 17:21:49,769 autoreload 30944 34364 Watching for file changes with StatReloader
+INFO 2026-02-13 17:23:06,636 log 30944 33128 "GET /users/ HTTP/1.1" 200 195945
+INFO 2026-02-13 17:23:59,396 log 30944 36240 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:24:00,042 log 30944 36240 "GET /users/ HTTP/1.1" 200 169277
+INFO 2026-02-13 17:24:28,417 log 30944 36240 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:24:29,058 log 30944 36240 "GET /users/ HTTP/1.1" 200 169288
+INFO 2026-02-13 17:27:29,141 log 30944 36240 "POST /portal/users/bulk-delete/ HTTP/1.1" 302 0
+INFO 2026-02-13 17:27:29,778 log 30944 36240 "GET /users/ HTTP/1.1" 200 147625
+INFO 2026-02-13 17:28:07,893 log 30944 36240 "GET /users/import/ HTTP/1.1" 200 12537
+INFO 2026-02-13 17:28:09,820 log 30944 36240 "GET /vouchers/ HTTP/1.1" 200 15316
+INFO 2026-02-13 17:28:11,760 log 30944 36240 "GET /portal/members/ HTTP/1.1" 200 12950
+INFO 2026-02-13 17:28:13,694 log 30944 36240 "GET /portal/requests/ HTTP/1.1" 200 11404
+INFO 2026-02-13 17:28:15,751 log 30944 36240 "GET /portal/members/ HTTP/1.1" 200 12950
+INFO 2026-02-13 17:29:39,390 log 30944 36240 "GET /portal/members/ HTTP/1.1" 200 12950
+INFO 2026-02-13 17:29:42,642 log 30944 36240 "GET /users/ HTTP/1.1" 200 147228

@@ -9,7 +9,8 @@ from hotspot.views import (
     kick_user, delete_user, usage_report, manage_vouchers,
     self_register, registration_requests, approve_user, reject_user,
     member_directory, user_autocomplete, reset_password, toggle_user_status,
-    admin_logs, compliance_report, export_compliance_csv
+    admin_logs, compliance_report, export_compliance_csv,
+    bulk_delete_users
 )
 
 from django.views.generic import RedirectView
@@ -27,6 +28,7 @@ urlpatterns = [
     path('portal/logs/', admin_logs, name='admin_logs'),
     path('portal/compliance/', compliance_report, name='compliance_report'),
     path('portal/compliance/export/', export_compliance_csv, name='export_compliance_csv'),
+    path('portal/users/bulk-delete/', bulk_delete_users, name='bulk_delete_users'),
     path('api/user-autocomplete/', user_autocomplete, name='user_autocomplete'),
 
     path('admin/', admin.site.urls),

@@ -23,3 +23,6 @@ local_settings.py
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+logs/*.log
+*.log

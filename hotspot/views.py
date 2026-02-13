@@ -688,3 +688,70 @@ def delete_user(request, username):
         cursor.execute("DELETE FROM approved_users WHERE username = %s", [username])
     messages.success(request, f"User '{username}' deleted.")
     return redirect('user_list')
+
+@login_required
+def bulk_delete_users(request):
+    """Bulk delete users by manual selection, or by prefix and length."""
+    if request.method == 'POST':
+        password = request.POST.get('confirm_password')
+        target_password = os.getenv('BULK_DELETE_PASSWORD', 'super')
+        
+        if password != target_password:
+            messages.error(request, "Incorrect super password. Bulk delete aborted.")
+            return redirect('user_list')
+            
+        manual_selection = request.POST.get('manual_selection', '').strip()
+        users_to_delete = []
+        criteria_msg = ""
+
+        if manual_selection:
+            users_to_delete = [u.strip() for u in manual_selection.split(',') if u.strip()]
+            criteria_msg = f"Manual selection ({len(users_to_delete)} users)"
+        else:
+            prefix = request.POST.get('prefix', '').strip()
+            user_length = request.POST.get('user_length', '').strip()
+            
+            if not prefix and not user_length:
+                messages.error(request, "Please select users manually or provide search criteria.")
+                return redirect('user_list')
+                
+            sql = "SELECT username FROM radcheck WHERE 1=1"
+            params = []
+            if prefix:
+                sql += " AND username LIKE %s"
+                params.append(f"{prefix}%")
+                criteria_msg += f"Prefix: '{prefix}' "
+            if user_length and user_length.isdigit():
+                sql += " AND LENGTH(username) = %s"
+                params.append(int(user_length))
+                criteria_msg += f"Length: {user_length}"
+                
+            with connection.cursor() as cursor:
+                cursor.execute(sql, params)
+                users_to_delete = [row[0] for row in cursor.fetchall()]
+
+        if not users_to_delete:
+            messages.info(request, "No users found matching the criteria.")
+            return redirect('user_list')
+            
+        count = len(users_to_delete)
+        with connection.cursor() as cursor:
+            # Batch delete in chunks of 500 to avoid SQL limit issues
+            for i in range(0, count, 500):
+                chunk = users_to_delete[i:i + 500]
+                placeholders = ', '.join(['%s'] * len(chunk))
+                cursor.execute(f"DELETE FROM radcheck WHERE username IN ({placeholders})", chunk)
+                cursor.execute(f"DELETE FROM radusergroup WHERE username IN ({placeholders})", chunk)
+                cursor.execute(f"DELETE FROM approved_users WHERE username IN ({placeholders})", chunk)
+            
+        # Record activity log
+        AdminActivityLog.objects.create(
+            admin_user=request.user.username,
+            action='Bulk Delete',
+            target=f"{count} users",
+            details=f"Criteria: {criteria_msg}. Sample users: {', '.join(users_to_delete[:10])}..."
+        )
+        
+        messages.success(request, f"Successfully deleted {count} users.")
+            
+    return redirect('user_list')
