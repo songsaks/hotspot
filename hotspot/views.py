@@ -654,10 +654,23 @@ def edit_profile(request, groupname):
 
 @login_required
 def delete_profile(request, groupname):
-    with connection.cursor() as cursor:
-        cursor.execute("DELETE FROM radgroupreply WHERE groupname = %s", [groupname])
-        cursor.execute("DELETE FROM radusergroup WHERE groupname = %s", [groupname])
-    messages.success(request, f"Profile '{groupname}' deleted.")
+    """Delete a profile group and all associated rules with password confirmation."""
+    if request.method == 'POST':
+        password = request.POST.get('confirm_password')
+        target_password = os.getenv('BULK_DELETE_PASSWORD', 'super')
+        
+        if password != target_password:
+            messages.error(request, "Incorrect super password. Profile deletion aborted.")
+            return redirect('manage_profiles')
+            
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM radgroupreply WHERE groupname = %s", [groupname])
+            cursor.execute("DELETE FROM radusergroup WHERE groupname = %s", [groupname])
+        
+        messages.success(request, f"Profile '{groupname}' has been deleted successfully.")
+    else:
+        messages.error(request, "Invalid request method for profile deletion.")
+        
     return redirect('manage_profiles')
 
 @login_required
