@@ -11,8 +11,9 @@
         :root {
             --primary: #2563eb;
             --primary-light: #eff6ff;
-            --accent-orange: #f97316; /* Orange Accent as requested */
+            --accent-orange: #f97316;
             --bg-body: #f8fafc;
+            --brand-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
             --sidebar-bg: #ffffff;
             --sidebar-width: 240px;
             --topbar-height: 50px;
@@ -95,27 +96,46 @@
         }
         
         .sidebar-brand {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             font-weight: 800;
-            color: var(--primary);
             text-decoration: none;
             display: flex;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-left: 0.5rem;
+            margin-bottom: 2.5rem;
+            padding: 0.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        .brand-text {
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .brand-text .subtext {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #94a3b8;
+            -webkit-text-fill-color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
         
         .brand-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--primary-light);
-            color: var(--primary);
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            background: var(--brand-gradient);
+            color: white;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
-            font-size: 0.9rem;
+            margin-right: 12px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         .nav-section-title {
@@ -230,8 +250,11 @@
 
     <div class="sidebar d-flex flex-column">
         <a href="{% url 'user_list' %}" class="sidebar-brand">
-            <div class="brand-icon"><i class="fas fa-bolt"></i></div>
-            <span>9Com Cloud</span>
+            <div class="brand-icon shadow-sm"><i class="fas fa-wifi"></i></div>
+            <div class="brand-text">
+                <span>Hotspot</span>
+                <span class="subtext">Cloud System</span>
+            </div>
         </a>
         
         <div class="nav-section-title">Operations</div>
@@ -242,11 +265,14 @@
             <a href="{% url 'user_list' %}" class="nav-link {% if 'users' in request.path and 'import' not in request.path %}active{% endif %}">
                 <i class="fas fa-user-friends"></i> Hotspot Users
             </a>
+            <a href="{% url 'manage_profiles' %}" class="nav-link {% if 'profiles' in request.path %}active{% endif %}">
+                <i class="fas fa-sliders-h"></i> Profile Groups
+            </a>
+            <a href="{% url 'user_import' %}" class="nav-link {% if 'import' in request.path %}active{% endif %}">
+                <i class="fas fa-cloud-upload-alt"></i> Bulk Import
+            </a>
             <a href="{% url 'active_sessions' %}" class="nav-link {% if 'sessions' in request.path %}active{% endif %}">
                 <i class="fas fa-satellite-dish"></i> Live Sessions
-            </a>
-            <a href="{% url 'usage_report' %}" class="nav-link {% if 'reports' in request.path %}active{% endif %}">
-                <i class="fas fa-chart-line"></i> Usage Report
             </a>
             <a href="{% url 'manage_vouchers' %}" class="nav-link {% if 'vouchers' in request.path %}active{% endif %}">
                 <i class="fas fa-ticket-alt"></i> Tickets (Voucher)
@@ -260,11 +286,8 @@
             <a href="{% url 'member_directory' %}" class="nav-link {% if 'members' in request.path %}active{% endif %}">
                 <i class="fas fa-address-book"></i> Member Directory
             </a>
-            <a href="{% url 'user_import' %}" class="nav-link {% if 'import' in request.path %}active{% endif %}">
-                <i class="fas fa-cloud-upload-alt"></i> Bulk Import
-            </a>
-            <a href="{% url 'manage_profiles' %}" class="nav-link {% if 'profiles' in request.path %}active{% endif %}">
-                <i class="fas fa-sliders-h"></i> Profile Groups
+            <a href="{% url 'usage_report' %}" class="nav-link {% if 'reports' in request.path %}active{% endif %}">
+                <i class="fas fa-chart-line"></i> Usage Report
             </a>
         </div>
 
