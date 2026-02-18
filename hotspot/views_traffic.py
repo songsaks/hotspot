@@ -130,3 +130,40 @@ def traffic_log_report(request):
         'search_username': search_username,
         'search_date': search_date_str
     })
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+@login_required
+def traffic_log_list(request):
+    """
+    General viewer for Traffic Logs.
+    Pull data to show beautifully.
+    """
+    search_query = request.GET.get('q', '').strip()
+    
+    # Use 'default' database
+    logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
+    
+    if search_query:
+        logs_queryset = logs_queryset.filter(
+            Q(source_ip__icontains=search_query) |
+            Q(destination_ip__icontains=search_query) |
+            Q(url__icontains=search_query) |
+            Q(method__icontains=search_query)
+        )
+    
+    # Pagination
+    paginator = Paginator(logs_queryset, 50) # 50 logs per page
+    page = request.GET.get('page')
+    
+    try:
+        logs_page = paginator.page(page)
+    except PageNotAnInteger:
+        logs_page = paginator.page(1)
+    except EmptyPage:
+        logs_page = paginator.page(paginator.num_pages)
+        
+    return render(request, 'hotspot/traffic_log_list.html', {
+        'logs': logs_page,
+        'search_query': search_query
+    })

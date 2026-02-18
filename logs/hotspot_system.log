@@ -508,3 +508,17 @@ INFO 2026-02-18 22:07:30,361 log 20572 20968 "POST /accounts/login/?next=/report
 INFO 2026-02-18 22:07:30,913 log 20572 20968 "GET /reports/traffic/ HTTP/1.1" 200 12081
 INFO 2026-02-18 22:08:08,528 log 20572 20968 "GET /reports/traffic/ HTTP/1.1" 200 12100
 INFO 2026-02-18 22:08:08,622 log 20572 20968 "GET /static/images/favicon.svg HTTP/1.1" 304 0
+INFO 2026-02-18 22:53:12,359 autoreload 20572 28164 D:\DjangoProjects\ninecom_hotspot\hotspot\views_traffic.py changed, reloading.
+INFO 2026-02-18 22:53:13,259 autoreload 21652 18940 Watching for file changes with StatReloader
+INFO 2026-02-18 22:53:58,865 autoreload 21652 18940 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-18 22:53:59,625 autoreload 17132 22420 Watching for file changes with StatReloader
+INFO 2026-02-18 22:55:33,720 log 17132 25276 "GET /reports/traffic/ HTTP/1.1" 200 12243
+INFO 2026-02-18 22:55:36,863 log 17132 25276 "GET /reports/traffic/list/ HTTP/1.1" 200 65197
+INFO 2026-02-18 22:56:05,048 log 17132 25276 "GET /reports/traffic/list/?q=192.168.1.62 HTTP/1.1" 200 64354
+INFO 2026-02-18 22:56:30,631 log 17132 25276 "GET /reports/traffic/list/?q= HTTP/1.1" 200 65209
+INFO 2026-02-18 23:02:39,170 log 17132 24408 "GET /reports/traffic/list/?q=+www.twitter.com HTTP/1.1" 200 64609
+INFO 2026-02-18 23:02:51,485 log 17132 24408 "GET /portal/logs/ HTTP/1.1" 200 52199
+INFO 2026-02-18 23:02:53,766 log 17132 24408 "GET /reports/traffic/ HTTP/1.1" 200 12243
+INFO 2026-02-18 23:04:50,144 log 17132 24408 "GET /reports/traffic/ HTTP/1.1" 200 12092
+INFO 2026-02-18 23:04:54,805 log 17132 24408 "GET /reports/usage/ HTTP/1.1" 200 20763
+INFO 2026-02-18 23:05:07,419 log 17132 24408 "GET /reports/usage/ HTTP/1.1" 200 20763

@@ -1,0 +1,103 @@
+{% extends 'hotspot/base.html' %}
+{% load static %}
+
+{% block title %}All Traffic Logs - 9Com Hotspot{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Traffic Logs (Raw Data)</h1>
+    <span class="badge bg-secondary">{{ logs.paginator.count }} Total Records</span>
+</div>
+
+<!-- Search Bar -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row align-items-center">
+            <div class="col-md-10">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search IP, URL, Method..." autocomplete="off">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.85rem;">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-3 py-3">Time</th>
+                        <th class="py-3">Router (NAS)</th>
+                        <th class="py-3">Source IP</th>
+                        <th class="py-3">Destination IP</th>
+                        <th class="py-3">Details / Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="ps-3 text-nowrap fw-bold text-muted">{{ log.log_time|date:"Y-m-d H:i:s" }}</td>
+                        <td>
+                            {% if log.nas_ip %}
+                                <span class="badge bg-light text-dark border font-monospace">{{ log.nas_ip }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-info bg-opacity-10 text-info font-monospace">{{ log.source_ip }}</span></td>
+                        <td><span class="badge bg-warning bg-opacity-10 text-dark font-monospace">{{ log.destination_ip }}</span></td>
+                        <td class="text-break">
+                            <!-- Try to display meaningful info -->
+                            {% if log.url and log.url != '0.0.0.0' and log.url != '-' %}
+                                <span class="fw-bold text-primary">{{ log.url }}</span>
+                            {% endif %}
+                            
+                            {% if log.method %}
+                                <small class="d-block text-muted" style="max-width: 400px; white-space: pre-wrap;">{{ log.method|truncatechars:150 }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-database fa-3x mb-3 text-light"></i>
+                            <p>No traffic logs found matching your criteria.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if logs.has_other_pages %}
+    <div class="card-footer bg-white py-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                {% if logs.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ logs.previous_page_number }}&q={{ search_query }}">&laquo; Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo; Previous</span></li>
+                {% endif %}
+                
+                <li class="page-item disabled"><span class="page-link">Page {{ logs.number }} of {{ logs.paginator.num_pages }}</span></li>
+                
+                {% if logs.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ logs.next_page_number }}&q={{ search_query }}">Next &raquo;</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

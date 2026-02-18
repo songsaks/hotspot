@@ -298,8 +298,8 @@
             <a href="{% url 'usage_report' %}" class="nav-link {% if request.resolver_match.url_name == 'usage_report' %}active{% endif %}">
                 <i class="fas fa-table"></i> Usage Report (List)
             </a>
-            <a href="{% url 'traffic_log_report' %}" class="nav-link {% if 'traffic' in request.path %}active{% endif %}">
-                <i class="fas fa-shield-alt"></i> Traffic Logs (Act)
+            <a href="{% url 'traffic_log_list' %}" class="nav-link {% if request.resolver_match.url_name == 'traffic_log_list' %}active{% endif %}">
+                <i class="fas fa-database"></i> Detailed Logs
             </a>
             <a href="{% url 'admin_logs' %}" class="nav-link {% if 'logs' in request.path %}active{% endif %}">
                 <i class="fas fa-history"></i> Activity Logs
