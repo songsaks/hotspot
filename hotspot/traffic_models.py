@@ -2,10 +2,11 @@ from django.db import models
 
 class TrafficLog(models.Model):
     log_time = models.DateTimeField()
+    nas_ip = models.CharField(max_length=45, blank=True, null=True)
     source_ip = models.CharField(max_length=45)  # Supprot IPv6
     destination_ip = models.CharField(max_length=45)
-    url = models.CharField(max_length=255)  # Domain or URL
-    method = models.CharField(max_length=10, blank=True, null=True) # GET, POST etc (Optional)
+    url = models.CharField(max_length=500, blank=True, null=True)  # Domain or Full Log Message
+    method = models.TextField(blank=True, null=True) # Full Log Details
     bytes_sent = models.BigIntegerField(default=0)
     bytes_received = models.BigIntegerField(default=0)
 

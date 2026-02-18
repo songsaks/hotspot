@@ -12,10 +12,10 @@
     <div class="card-body">
         <form method="GET" class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label for="username" class="form-label">Username</label>
+                <label for="username" class="form-label">Username or IP</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
-                    <input type="text" class="form-control" id="username" name="username" value="{{ search_username }}" placeholder="e.g. user01" required>
+                    <input type="text" class="form-control" name="username" id="username" value="{{ search_username }}" placeholder="e.g. user01 or 10.20.0.3" required>
                 </div>
             </div>
             <div class="col-md-3">

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.db.models import Q
-from datetime import datetime, time
+from django.db.models import Q
+from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -36,11 +37,24 @@ def traffic_log_report(request):
             start_of_day = midday.replace(hour=0, minute=0, second=0, microsecond=0)
             end_of_day = midday.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-            # Step 1: Find Sessions for this User active on this Date
+            # Step 1: Find Sessions for this User/IP active on this Date
             # Condition: Session started before end of day AND (ended after start of day OR is still active)
+            
+            # Check if input is an IP address
+            import re
+            is_ip_search = re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", search_username)
+            
+            query_kwargs = {
+                'acctstarttime__lte': end_of_day
+            }
+            
+            if is_ip_search:
+                query_kwargs['framedipaddress'] = search_username
+            else:
+                query_kwargs['username'] = search_username
+                
             sessions = Radacct.objects.using('default').filter(
-                username=search_username,
-                acctstarttime__lte=end_of_day
+                **query_kwargs
             ).filter(
                 Q(acctstoptime__gte=start_of_day) | Q(acctstoptime__isnull=True)
             )
@@ -64,27 +78,52 @@ def traffic_log_report(request):
                     
                 # Step 2: Query TrafficLog
                 # Note: 'source_ip' in TrafficLog must match 'framedipaddress'
+                # DEBUG: Use naive comparison if DB is naive
+                
+                # Check if IP exists
+                if not ip:
+                    continue
+                    
+                # If no logs found with strict match, try relaxed window (e.g. +/- 1 min skew)
+                # AND check destination_ip because Mikrotik logs might put client IP there
                 traffic_logs = TrafficLog.objects.using('default').filter(
-                    source_ip=ip, 
-                    log_time__range=(search_start, search_end)
-                ).values('log_time', 'source_ip', 'destination_ip', 'url')
+                    Q(source_ip=ip) | Q(destination_ip=ip),
+                    log_time__gte=search_start - timedelta(minutes=5),
+                    log_time__lte=search_end + timedelta(minutes=5)
+                ).values('log_time', 'source_ip', 'destination_ip', 'url', 'method')
 
                 for log in traffic_logs:
+                    # Determine which field holds the meaningful info (URL vs Message)
+                    website_info = log['url']
+                    if website_info == '0.0.0.0' or website_info == '-':
+                        # Log message is likely in 'method' or combined
+                        website_info = log['method'] or log['url']
+
+                    # Check if 'method' is actually holding the message
+                    if log['method'] and len(log['method']) > 20: 
+                         website_info = log['method']
+
                     logs_result.append({
                         'time': log['log_time'],
                         'username': search_username,
-                        'ip': log['source_ip'],
-                        'website': log['url'],
-                        'destination_ip': log['destination_ip']
+                        'ip': ip,
+                        'website': website_info,
+                        'destination_ip': log['destination_ip'] if log['destination_ip'] != ip else log['source_ip']
                     })
                     
         except ValueError:
             messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
         except Exception as e:
             messages.error(request, f"Error searching logs: {str(e)}")
+            import traceback
+            print(traceback.format_exc()) # Print to console for debugging
     
     # Sort results by time descending
     logs_result.sort(key=lambda x: x['time'], reverse=True)
+    
+    # Validation Message for User
+    if search_username and not logs_result:
+        messages.info(request, f"No traffic logs found for user '{search_username}' on {search_date_str}. Verified sessions existence? { 'Yes' if 'sessions' in locals() and sessions.exists() else 'No' }.")
     
     return render(request, 'hotspot/traffic_log_report.html', {
         'logs': logs_result,

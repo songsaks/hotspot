@@ -32,6 +32,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['www.9hotspot.cloud', '9hotspot.cloud', 'localhost', '127.0.0.1', '76.13.188.152']
 
+# Security Settings for Production/VPS
+CSRF_TRUSTED_ORIGINS = [
+    'https://www.9hotspot.cloud',
+    'https://9hotspot.cloud',
+    'http://76.13.188.152',
+    'https://76.13.188.152',
+]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
@@ -123,7 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 

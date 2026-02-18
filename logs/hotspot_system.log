@@ -410,3 +410,101 @@ INFO 2026-02-18 09:45:00,079 log 17468 29188 "GET /reports/traffic/ HTTP/1.1" 20
 INFO 2026-02-18 09:45:17,624 log 17468 29188 "GET /reports/traffic/?username=bob&date=2026-02-17 HTTP/1.1" 200 13370
 INFO 2026-02-18 09:45:21,813 log 17468 29188 "GET /reports/usage/ HTTP/1.1" 200 19810
 INFO 2026-02-18 09:45:26,409 log 17468 29188 "GET /reports/traffic/ HTTP/1.1" 200 11965
+INFO 2026-02-18 09:45:28,688 log 17468 29188 "GET /portal/logs/ HTTP/1.1" 200 50693
+INFO 2026-02-18 09:45:30,837 log 17468 29188 "GET /portal/compliance/ HTTP/1.1" 200 37276
+INFO 2026-02-18 09:45:35,918 log 17468 29188 "GET /reports/analytics/ HTTP/1.1" 200 18188
+INFO 2026-02-18 09:45:52,509 log 17468 29188 "GET /reports/search/ HTTP/1.1" 200 12449
+INFO 2026-02-18 09:45:57,785 log 17468 29188 "GET /reports/search/?q=bob HTTP/1.1" 200 32911
+INFO 2026-02-18 09:46:10,242 log 17468 29188 "GET /reports/usage/ HTTP/1.1" 200 19810
+INFO 2026-02-18 09:46:12,641 log 17468 29188 "GET /reports/analytics/ HTTP/1.1" 200 18188
+INFO 2026-02-18 09:46:15,671 log 17468 29188 "GET /dashboard/ HTTP/1.1" 200 16627
+INFO 2026-02-18 09:46:28,677 log 17468 29188 "GET /users/ HTTP/1.1" 200 581931
+INFO 2026-02-18 16:42:40,647 log 17468 20720 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 302 0
+INFO 2026-02-18 16:42:40,656 log 17468 20720 "GET /accounts/login/?next=/reports/traffic/%3Fusername%3Dtest2%26date%3D2026-02-17 HTTP/1.1" 200 2923
+INFO 2026-02-18 16:42:42,396 log 17468 20720 "GET /reports/traffic/ HTTP/1.1" 302 0
+INFO 2026-02-18 16:42:42,413 log 17468 20720 "GET /accounts/login/?next=/reports/traffic/ HTTP/1.1" 200 2923
+INFO 2026-02-18 20:14:05,016 autoreload 17468 6656 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
+INFO 2026-02-18 20:14:06,371 autoreload 5900 28404 Watching for file changes with StatReloader
+INFO 2026-02-18 20:27:44,198 autoreload 5900 28404 D:\DjangoProjects\ninecom_hotspot\hotspot\views_traffic.py changed, reloading.
+INFO 2026-02-18 20:27:45,091 autoreload 27300 7136 Watching for file changes with StatReloader
+INFO 2026-02-18 20:28:20,377 log 27300 24168 "GET / HTTP/1.1" 302 0
+INFO 2026-02-18 20:28:20,415 log 27300 24168 "GET /accounts/login/?next=/ HTTP/1.1" 200 2923
+INFO 2026-02-18 20:28:25,367 log 27300 24168 "POST /accounts/login/?next=/ HTTP/1.1" 302 0
+INFO 2026-02-18 20:28:27,011 log 27300 24168 "GET / HTTP/1.1" 200 16743
+INFO 2026-02-18 20:29:05,086 log 27300 24168 "GET /reports/search/ HTTP/1.1" 302 0
+INFO 2026-02-18 20:29:05,099 log 27300 24168 "GET /accounts/login/?next=/reports/search/ HTTP/1.1" 200 2923
+INFO 2026-02-18 20:29:08,893 log 27300 24168 "POST /accounts/login/?next=/reports/search/ HTTP/1.1" 302 0
+INFO 2026-02-18 20:29:09,741 log 27300 24168 "GET /reports/search/ HTTP/1.1" 200 12565
+INFO 2026-02-18 20:29:13,323 log 27300 24168 "GET /portal/requests/ HTTP/1.1" 200 17613
+INFO 2026-02-18 20:29:15,637 log 27300 24168 "GET /portal/requests/ HTTP/1.1" 200 17613
+INFO 2026-02-18 20:29:16,292 log 27300 8792 "GET /portal/members/ HTTP/1.1" 200 16496
+INFO 2026-02-18 20:29:17,795 log 27300 8792 "GET /reports/analytics/ HTTP/1.1" 200 18292
+INFO 2026-02-18 20:29:19,833 log 27300 8792 "GET /reports/search/ HTTP/1.1" 200 12565
+INFO 2026-02-18 20:29:27,710 log 27300 8792 "GET /reports/traffic/ HTTP/1.1" 200 12081
+INFO 2026-02-18 20:29:32,492 log 27300 8792 "GET /sessions/ HTTP/1.1" 200 14779
+INFO 2026-02-18 20:29:34,440 log 27300 8792 "GET /reports/usage/ HTTP/1.1" 302 0
+INFO 2026-02-18 20:29:34,453 log 27300 8792 "GET /accounts/login/?next=/reports/usage/ HTTP/1.1" 200 2923
+INFO 2026-02-18 20:29:38,349 log 27300 8792 "POST /accounts/login/?next=/reports/usage/ HTTP/1.1" 302 0
+INFO 2026-02-18 20:29:38,922 log 27300 8792 "GET /reports/usage/ HTTP/1.1" 200 20765
+INFO 2026-02-18 20:29:48,486 log 27300 8792 "GET /reports/traffic/ HTTP/1.1" 200 12081
+INFO 2026-02-18 20:29:57,499 log 27300 8792 "GET /reports/traffic/?username=5390&date=2026-02-18 HTTP/1.1" 200 13955
+INFO 2026-02-18 20:36:43,219 log 27300 21412 "GET /reports/traffic/?username=5390&date=2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 20:36:43,226 log 27300 21412 "GET /accounts/login/?next=/reports/traffic/%3Fusername%3D5390%26date%3D2026-02-18 HTTP/1.1" 200 2923
+INFO 2026-02-18 20:36:46,681 log 27300 21412 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D5390%26date%3D2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 20:36:47,411 log 27300 21412 "GET /reports/traffic/?username=5390&date=2026-02-18 HTTP/1.1" 200 13955
+INFO 2026-02-18 20:36:53,229 log 27300 21412 "GET /reports/traffic/?username=5390&date=2026-02-18 HTTP/1.1" 200 13955
+INFO 2026-02-18 20:36:56,504 log 27300 21412 "GET /reports/traffic/?username=5390&date=2026-02-18 HTTP/1.1" 200 13955
+INFO 2026-02-18 20:37:15,484 log 27300 21412 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13969
+INFO 2026-02-18 20:37:18,740 log 27300 21412 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13969
+INFO 2026-02-18 20:39:05,817 autoreload 27300 7136 D:\DjangoProjects\ninecom_hotspot\hotspot\views_traffic.py changed, reloading.
+INFO 2026-02-18 20:39:06,632 autoreload 10548 8072 Watching for file changes with StatReloader
+INFO 2026-02-18 20:39:30,589 log 10548 19684 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 20:39:30,601 log 10548 19684 "GET /accounts/login/?next=/reports/traffic/%3Fusername%3D10.20.0.3%26date%3D2026-02-18 HTTP/1.1" 200 2923
+INFO 2026-02-18 20:39:33,778 log 10548 19684 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D10.20.0.3%26date%3D2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 20:39:34,559 log 10548 19684 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 20:39:36,859 log 10548 19684 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 20:43:04,436 log 10548 19684 "GET /reports/traffic/?username=10.1.1.2&date=2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 20:43:04,447 log 10548 19684 "GET /accounts/login/?next=/reports/traffic/%3Fusername%3D10.1.1.2%26date%3D2026-02-18 HTTP/1.1" 200 2923
+INFO 2026-02-18 20:43:07,634 log 10548 19684 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D10.1.1.2%26date%3D2026-02-18 HTTP/1.1" 302 0
+WARNING 2026-02-18 20:43:07,806 log 10548 6892 Forbidden (CSRF token from POST incorrect.): /accounts/login/
+WARNING 2026-02-18 20:43:07,807 log 10548 6892 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D10.1.1.2%26date%3D2026-02-18 HTTP/1.1" 403 2503
+INFO 2026-02-18 20:43:08,243 basehttp 10548 19684 - Broken pipe from ('127.0.0.1', 61106)
+INFO 2026-02-18 20:45:44,856 autoreload 10548 8072 D:\DjangoProjects\ninecom_hotspot\config\settings.py changed, reloading.
+INFO 2026-02-18 20:45:45,619 autoreload 23648 26560 Watching for file changes with StatReloader
+WARNING 2026-02-18 20:45:54,383 log 23648 6368 Forbidden (CSRF token from POST incorrect.): /accounts/login/
+WARNING 2026-02-18 20:45:54,384 log 23648 6368 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D10.1.1.2%26date%3D2026-02-18 HTTP/1.1" 403 2503
+INFO 2026-02-18 20:45:57,190 log 23648 6368 "GET /accounts/login/?next=/reports/traffic/%3Fusername%3D10.1.1.2%26date%3D2026-02-18 HTTP/1.1" 200 2923
+INFO 2026-02-18 20:46:07,553 basehttp 23648 6368 - Broken pipe from ('127.0.0.1', 15665)
+INFO 2026-02-18 20:46:07,587 log 23648 20076 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D10.1.1.2%26date%3D2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 20:46:08,215 log 23648 20076 "GET /reports/traffic/?username=10.1.1.2&date=2026-02-18 HTTP/1.1" 200 13966
+INFO 2026-02-18 20:46:12,133 log 23648 20076 "GET /reports/traffic/?username=10.1.1.2&date=2026-02-18 HTTP/1.1" 200 13966
+INFO 2026-02-18 20:46:16,021 log 23648 20076 "GET /reports/traffic/?username=10.1.1.2&date=2026-02-18 HTTP/1.1" 200 13966
+INFO 2026-02-18 20:46:16,806 log 23648 20076 "GET /reports/traffic/?username=10.1.1.2&date=2026-02-18 HTTP/1.1" 200 13966
+INFO 2026-02-18 20:46:22,645 log 23648 20076 "GET /vouchers/ HTTP/1.1" 200 16271
+INFO 2026-02-18 20:46:25,527 log 23648 20076 "GET /reports/search/ HTTP/1.1" 200 12565
+INFO 2026-02-18 20:46:30,905 log 23648 20076 "GET /sessions/ HTTP/1.1" 200 14779
+INFO 2026-02-18 21:07:20,769 autoreload 23648 26560 D:\DjangoProjects\ninecom_hotspot\hotspot\views_traffic.py changed, reloading.
+INFO 2026-02-18 21:07:21,607 autoreload 27684 17836 Watching for file changes with StatReloader
+INFO 2026-02-18 21:07:46,224 log 27684 17080 "GET /reports/traffic/ HTTP/1.1" 302 0
+INFO 2026-02-18 21:07:46,235 log 27684 17080 "GET /accounts/login/?next=/reports/traffic/ HTTP/1.1" 200 2923
+INFO 2026-02-18 21:07:49,736 log 27684 17080 "POST /accounts/login/?next=/reports/traffic/ HTTP/1.1" 302 0
+INFO 2026-02-18 21:07:50,305 log 27684 17080 "GET /reports/traffic/ HTTP/1.1" 200 12081
+INFO 2026-02-18 21:08:20,184 log 27684 17080 "GET /reports/traffic/?username=9com.cloud&date=2026-02-18 HTTP/1.1" 200 13972
+INFO 2026-02-18 21:08:43,272 log 27684 17080 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 21:08:43,283 log 27684 17080 "GET /accounts/login/?next=/reports/traffic/%3Fusername%3D10.20.0.3%26date%3D2026-02-18 HTTP/1.1" 200 2923
+INFO 2026-02-18 21:08:46,772 log 27684 17080 "POST /accounts/login/?next=/reports/traffic/%3Fusername%3D10.20.0.3%26date%3D2026-02-18 HTTP/1.1" 302 0
+INFO 2026-02-18 21:08:47,407 log 27684 17080 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 21:08:50,383 log 27684 17080 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 21:08:53,136 log 27684 17080 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 21:09:03,305 log 27684 17080 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 21:09:08,094 log 27684 17080 "GET /reports/traffic/?username=10.20.0.3&date=2026-02-18 HTTP/1.1" 200 13970
+INFO 2026-02-18 22:03:56,359 autoreload 27684 17836 D:\DjangoProjects\ninecom_hotspot\hotspot\traffic_models.py changed, reloading.
+INFO 2026-02-18 22:03:57,367 autoreload 7016 16424 Watching for file changes with StatReloader
+INFO 2026-02-18 22:06:23,499 autoreload 7016 16424 D:\DjangoProjects\ninecom_hotspot\hotspot\traffic_models.py changed, reloading.
+INFO 2026-02-18 22:06:24,326 autoreload 20572 28164 Watching for file changes with StatReloader
+INFO 2026-02-18 22:07:26,978 log 20572 20968 "GET /reports/traffic/ HTTP/1.1" 302 0
+INFO 2026-02-18 22:07:26,987 log 20572 20968 "GET /accounts/login/?next=/reports/traffic/ HTTP/1.1" 200 2923
+INFO 2026-02-18 22:07:30,361 log 20572 20968 "POST /accounts/login/?next=/reports/traffic/ HTTP/1.1" 302 0
+INFO 2026-02-18 22:07:30,913 log 20572 20968 "GET /reports/traffic/ HTTP/1.1" 200 12081
+INFO 2026-02-18 22:08:08,528 log 20572 20968 "GET /reports/traffic/ HTTP/1.1" 200 12100
+INFO 2026-02-18 22:08:08,622 log 20572 20968 "GET /static/images/favicon.svg HTTP/1.1" 304 0
