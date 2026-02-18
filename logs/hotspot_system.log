@@ -576,3 +576,4 @@ INFO 2026-02-19 00:05:16,510 log 17132 12056 "GET /reports/analytics/ HTTP/1.1" 
 INFO 2026-02-19 00:05:21,130 log 17132 12056 "GET /reports/analytics/ HTTP/1.1" 200 18290
 INFO 2026-02-19 00:06:18,206 autoreload 17132 22420 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
 INFO 2026-02-19 00:06:19,096 autoreload 29880 1428 Watching for file changes with StatReloader
+INFO 2026-02-19 00:06:40,460 log 29880 4992 "GET /reports/analytics/ HTTP/1.1" 200 18309
