@@ -25,4 +25,4 @@ local_settings.py
 Thumbs.db
 
 logs/*.log
-*.log
+*.log"logs/*.log" 
