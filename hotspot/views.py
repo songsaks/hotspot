@@ -9,9 +9,10 @@ import string
 import logging
 import os
 import csv
-from datetime import datetime
 from django.conf import settings
 from django.http import HttpResponse
+from datetime import datetime
+from datetime import time  # Added import
 from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog
 from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, Radacct
 from .traffic_models import TrafficLog
@@ -798,26 +799,31 @@ def bulk_delete_users(request):
 def analytics_dashboard(request):
     """
     Traffic Dashboard: Real-time status and historical trends.
+    Uses Python-side aggregation for robustness against Timezone db issues.
     """
-    today = timezone.now().date()
-    yesterday_7d = today - timedelta(days=6)
-    
     # 1. Real-time Active Users
-    active_users_count = Radacct.objects.filter(acctstoptime__isnull=True).count()
+    active_users_count = Radacct.objects.using('default').filter(acctstoptime__isnull=True).count()
 
+    # Timezone Setup (Local Time)
+    tz = timezone.get_current_timezone()
+    now_local = timezone.now().astimezone(tz)
+    
+    # Start of Today (Local Midnight)
+    start_of_today = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+    
     # 2. Today's Total Bandwidth (GB)
-    # Using 'default' database (radius_db)
-    today_stats = Radacct.objects.filter(acctstarttime__date=today).aggregate(
+    today_qs = Radacct.objects.using('default').filter(acctstarttime__gte=start_of_today)
+    
+    today_stats = today_qs.aggregate(
         total_in=Coalesce(Sum('acctinputoctets'), 0),
         total_out=Coalesce(Sum('acctoutputoctets'), 0)
     )
-    total_bytes_today = today_stats['total_in'] + today_stats['total_out']
+    total_bytes_today = (today_stats['total_in'] or 0) + (today_stats['total_out'] or 0)
     bandwidth_gb_today = round(total_bytes_today / (1024**3), 2)
 
     # 3. Top 10 Users (Today)
     top_users_qs = (
-        Radacct.objects
-        .filter(acctstarttime__date=today)
+        today_qs
         .values('username')
         .annotate(
             total_usage=Sum(F('acctinputoctets') + F('acctoutputoctets'))
@@ -832,47 +838,64 @@ def analytics_dashboard(request):
         top_user_usage.append(round((user['total_usage'] or 0) / (1024**3), 2))
 
     # 4. 7 Days History Chart (Active Users & Bandwidth)
-    history_qs = (
-        Radacct.objects
-        .filter(acctstarttime__date__gte=yesterday_7d)
-        .annotate(date=TruncDate('acctstarttime'))
-        .values('date')
-        .annotate(
-            unique_users=Count('username', distinct=True),
-            total_bandwidth=Sum(F('acctinputoctets') + F('acctoutputoctets'))
-        )
-        .order_by('date')
-    )
+    start_of_7d = start_of_today - timedelta(days=6)
+    
+    # Fetch raw data for Python processing
+    history_logs = Radacct.objects.using('default').filter(
+        acctstarttime__gte=start_of_7d
+    ).values('acctstarttime', 'username', 'acctinputoctets', 'acctoutputoctets')
+    
+    # Prepare Buckets
+    history_map = {}
+    current_date = start_of_7d
+    date_labels = []
+    
+    # Initialize map for last 7 days (inclusive of today)
+    for _ in range(7):
+        d_str = current_date.strftime('%Y-%m-%d')
+        history_map[d_str] = {'users': set(), 'bandwidth': 0}
+        date_labels.append(d_str)
+        current_date += timedelta(days=1)
+        
+    # Aggregate data
+    for log in history_logs:
+        # Convert Log Time (UTC/Aware) to Local Date
+        if log['acctstarttime']:
+            local_dt = log['acctstarttime'].astimezone(tz)
+            d_str = local_dt.strftime('%Y-%m-%d')
+            
+            if d_str in history_map:
+                history_map[d_str]['users'].add(log['username'])
+                b_in = log['acctinputoctets'] or 0
+                b_out = log['acctoutputoctets'] or 0
+                history_map[d_str]['bandwidth'] += (b_in + b_out)
 
-    dates = []
+    # Convert to Lists for Chart
     daily_users = []
     daily_bandwidth = []
-
-    # Fill in dates to ensure continuous chart
-    history_map = {item['date']: item for item in history_qs}
-    current_date = yesterday_7d
     
-    for _ in range(7):
-        entry = history_map.get(current_date)
-        dates.append(current_date.strftime('%Y-%m-%d'))
-        if entry:
-            daily_users.append(entry['unique_users'])
-            daily_bandwidth.append(round((entry['total_bandwidth'] or 0) / (1024**3), 2))
-        else:
-            daily_users.append(0)
-            daily_bandwidth.append(0)
-        current_date += timedelta(days=1)
+    for d_str in date_labels:
+        data = history_map[d_str]
+        daily_users.append(len(data['users']))
+        daily_bandwidth.append(round(data['bandwidth'] / (1024**3), 2))
 
-    # 5. Hourly Usage (Avg over last 7 days) needed for existing template chart? 
-    # Let's simple keep today's hourly for now if template expects it, or update template logic.
-    # The user request mentioned "Charts: ... 7 days". 
-    # I'll keep the context structure compatible with the template I wrote earlier or update it.
+    # 5. Hourly Usage (Today) - Python Side
+    hourly_counts = [0] * 24
+    hours_labels = list(range(24))
+    
+    # Reuse today_qs data roughly? Or better fetch hourly explicitly?
+    # Fetch just hours for today
+    today_hours = today_qs.values('acctstarttime')
+    for h in today_hours:
+        if h['acctstarttime']:
+            local_dt = h['acctstarttime'].astimezone(tz)
+            hourly_counts[local_dt.hour] += 1
     
     context = {
         'active_users_count': active_users_count,
         'bandwidth_gb_today': bandwidth_gb_today,
         # Chart Data
-        'dates': json.dumps(dates),
+        'dates': json.dumps(date_labels),
         'user_counts': json.dumps(daily_users),
         'bandwidth_data': json.dumps(daily_bandwidth),
         
@@ -880,26 +903,11 @@ def analytics_dashboard(request):
         'top_user_names': json.dumps(top_user_names),
         'top_user_usage': json.dumps(top_user_usage),
         
-        # Keeping existing hourly chart logic simple (Today's hourly)
-        'hours': json.dumps(list(range(24))),
-        'hourly_counts': json.dumps([0]*24), # Placeholder if not requested, or I can implement today avg
+        # Hourly
+        'hours': json.dumps(hours_labels),
+        'hourly_counts': json.dumps(hourly_counts),
         
         'title': 'Traffic & Analytics Dashboard'
     }
-    
-    # Re-implement Hourly if needed for the template structure
-    # The existing template uses 'hours' and 'hourly_counts'.
-    hourly_qs = (
-        Radacct.objects
-        .filter(acctstarttime__date=today)
-        .annotate(hour=ExtractHour('acctstarttime'))
-        .values('hour')
-        .annotate(count=Count('radacctid'))
-        .order_by('hour')
-    )
-    hourly_counts = [0] * 24
-    for entry in hourly_qs:
-        hourly_counts[entry['hour']] = entry['count']
-    context['hourly_counts'] = json.dumps(hourly_counts)
 
     return render(request, 'hotspot/analytics_dashboard.html', context)
