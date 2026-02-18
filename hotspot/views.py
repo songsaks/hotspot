@@ -13,13 +13,37 @@ from datetime import datetime
 from django.conf import settings
 from django.http import HttpResponse
 from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog
+from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, Radacct
+from .traffic_models import TrafficLog
 from .forms import HotspotUserForm, UserImportForm
+import json
+from django.db.models import Count, Sum, F, FloatField, ExpressionWrapper, Q, Value
+from django.db.models.functions import TruncDate, ExtractHour, Coalesce
+from django.utils import timezone
+from datetime import timedelta
 
 logger = logging.getLogger('hotspot')
 
+from django.core.paginator import Paginator
+from django.db.models import Q
+import csv
+
 @login_required
 def dashboard(request):
-    return render(request, 'hotspot/dashboard.html')
+    # Summary Statistics
+    total_users = Radcheck.objects.count()
+    online_users = Radacct.objects.filter(acctstoptime__isnull=True).count()
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    todays_active = Radacct.objects.filter(acctstarttime__gte=today_start).values('username').distinct().count()
+    pending_requests = PendingUser.objects.count()
+
+    context = {
+        'total_users': total_users,
+        'online_users': online_users,
+        'todays_active': todays_active,
+        'pending_requests': pending_requests
+    }
+    return render(request, 'hotspot/dashboard.html', context)
 
 # ... existing code ...
 
@@ -768,3 +792,114 @@ def bulk_delete_users(request):
         messages.success(request, f"Successfully deleted {count} users.")
             
     return redirect('user_list')
+
+
+@login_required
+def analytics_dashboard(request):
+    """
+    Traffic Dashboard: Real-time status and historical trends.
+    """
+    today = timezone.now().date()
+    yesterday_7d = today - timedelta(days=6)
+    
+    # 1. Real-time Active Users
+    active_users_count = Radacct.objects.filter(acctstoptime__isnull=True).count()
+
+    # 2. Today's Total Bandwidth (GB)
+    # Using 'default' database (radius_db)
+    today_stats = Radacct.objects.filter(acctstarttime__date=today).aggregate(
+        total_in=Coalesce(Sum('acctinputoctets'), 0),
+        total_out=Coalesce(Sum('acctoutputoctets'), 0)
+    )
+    total_bytes_today = today_stats['total_in'] + today_stats['total_out']
+    bandwidth_gb_today = round(total_bytes_today / (1024**3), 2)
+
+    # 3. Top 10 Users (Today)
+    top_users_qs = (
+        Radacct.objects
+        .filter(acctstarttime__date=today)
+        .values('username')
+        .annotate(
+            total_usage=Sum(F('acctinputoctets') + F('acctoutputoctets'))
+        )
+        .order_by('-total_usage')[:10]
+    )
+    
+    top_user_names = []
+    top_user_usage = []
+    for user in top_users_qs:
+        top_user_names.append(user['username'])
+        top_user_usage.append(round((user['total_usage'] or 0) / (1024**3), 2))
+
+    # 4. 7 Days History Chart (Active Users & Bandwidth)
+    history_qs = (
+        Radacct.objects
+        .filter(acctstarttime__date__gte=yesterday_7d)
+        .annotate(date=TruncDate('acctstarttime'))
+        .values('date')
+        .annotate(
+            unique_users=Count('username', distinct=True),
+            total_bandwidth=Sum(F('acctinputoctets') + F('acctoutputoctets'))
+        )
+        .order_by('date')
+    )
+
+    dates = []
+    daily_users = []
+    daily_bandwidth = []
+
+    # Fill in dates to ensure continuous chart
+    history_map = {item['date']: item for item in history_qs}
+    current_date = yesterday_7d
+    
+    for _ in range(7):
+        entry = history_map.get(current_date)
+        dates.append(current_date.strftime('%Y-%m-%d'))
+        if entry:
+            daily_users.append(entry['unique_users'])
+            daily_bandwidth.append(round((entry['total_bandwidth'] or 0) / (1024**3), 2))
+        else:
+            daily_users.append(0)
+            daily_bandwidth.append(0)
+        current_date += timedelta(days=1)
+
+    # 5. Hourly Usage (Avg over last 7 days) needed for existing template chart? 
+    # Let's simple keep today's hourly for now if template expects it, or update template logic.
+    # The user request mentioned "Charts: ... 7 days". 
+    # I'll keep the context structure compatible with the template I wrote earlier or update it.
+    
+    context = {
+        'active_users_count': active_users_count,
+        'bandwidth_gb_today': bandwidth_gb_today,
+        # Chart Data
+        'dates': json.dumps(dates),
+        'user_counts': json.dumps(daily_users),
+        'bandwidth_data': json.dumps(daily_bandwidth),
+        
+        # Top Users
+        'top_user_names': json.dumps(top_user_names),
+        'top_user_usage': json.dumps(top_user_usage),
+        
+        # Keeping existing hourly chart logic simple (Today's hourly)
+        'hours': json.dumps(list(range(24))),
+        'hourly_counts': json.dumps([0]*24), # Placeholder if not requested, or I can implement today avg
+        
+        'title': 'Traffic & Analytics Dashboard'
+    }
+    
+    # Re-implement Hourly if needed for the template structure
+    # The existing template uses 'hours' and 'hourly_counts'.
+    hourly_qs = (
+        Radacct.objects
+        .filter(acctstarttime__date=today)
+        .annotate(hour=ExtractHour('acctstarttime'))
+        .values('hour')
+        .annotate(count=Count('radacctid'))
+        .order_by('hour')
+    )
+    hourly_counts = [0] * 24
+    for entry in hourly_qs:
+        hourly_counts[entry['hour']] = entry['count']
+    context['hourly_counts'] = json.dumps(hourly_counts)
+
+    return render(request, 'hotspot/analytics_dashboard.html', context)

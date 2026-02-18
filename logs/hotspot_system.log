@@ -230,3 +230,183 @@ INFO 2026-02-13 19:24:43,421 log 35712 21644 "GET /users/ HTTP/1.1" 200 147542
 INFO 2026-02-13 19:24:45,339 log 35712 21644 "GET /dashboard/ HTTP/1.1" 200 14438
 INFO 2026-02-13 19:32:04,381 autoreload 35712 18720 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
 INFO 2026-02-13 19:32:05,409 autoreload 24800 25928 Watching for file changes with StatReloader
+INFO 2026-02-13 19:32:31,218 log 24800 5744 "GET /profiles/ HTTP/1.1" 200 41533
+INFO 2026-02-17 18:06:36,237 autoreload 20112 20504 Watching for file changes with StatReloader
+INFO 2026-02-17 18:06:42,766 log 20112 9428 "GET / HTTP/1.1" 302 0
+INFO 2026-02-17 18:06:42,807 log 20112 9428 "GET /accounts/login/?next=/ HTTP/1.1" 200 2923
+INFO 2026-02-17 18:06:46,461 log 20112 9428 "POST /accounts/login/?next=/ HTTP/1.1" 302 0
+INFO 2026-02-17 18:06:47,156 log 20112 9428 "GET / HTTP/1.1" 200 15951
+INFO 2026-02-17 18:06:47,420 log 20112 9428 "GET /static/images/favicon.svg HTTP/1.1" 200 2390
+INFO 2026-02-17 18:07:01,220 log 20112 9428 "GET /portal/compliance/ HTTP/1.1" 200 36100
+INFO 2026-02-17 18:07:04,757 log 20112 9428 "GET /dashboard/ HTTP/1.1" 200 15951
+INFO 2026-02-17 18:07:16,528 log 20112 9428 "GET /dashboard/ HTTP/1.1" 200 15951
+INFO 2026-02-17 18:07:18,036 log 20112 9428 "GET /dashboard/ HTTP/1.1" 200 15951
+INFO 2026-02-17 18:07:57,944 log 20112 9428 "GET /portal/compliance/ HTTP/1.1" 200 36100
+INFO 2026-02-17 18:14:17,287 autoreload 20112 20504 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-17 18:14:18,145 autoreload 9880 10132 Watching for file changes with StatReloader
+ERROR 2026-02-17 18:14:23,292 log 9880 9980 Internal Server Error: /
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\hotspot\views.py", line 22, in dashboard
+    return render(request, 'hotspot/dashboard.html')
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hotspot/dashboard.html
+ERROR 2026-02-17 18:14:23,297 log 9880 9980 "GET / HTTP/1.1" 500 93157
+INFO 2026-02-17 18:17:43,283 autoreload 9880 10132 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-17 18:17:44,188 autoreload 6936 7412 Watching for file changes with StatReloader
+INFO 2026-02-17 18:17:51,337 autoreload 6936 7412 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-17 18:17:52,163 autoreload 14212 12468 Watching for file changes with StatReloader
+ERROR 2026-02-17 18:17:57,053 log 14212 19860 Internal Server Error: /
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\hotspot\views.py", line 28, in dashboard
+    return render(request, 'hotspot/dashboard.html')
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hotspot/dashboard.html
+ERROR 2026-02-17 18:17:57,056 log 14212 19860 "GET / HTTP/1.1" 500 93097
+ERROR 2026-02-17 18:19:15,153 log 14212 19860 Internal Server Error: /
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\hotspot\views.py", line 28, in dashboard
+    return render(request, 'hotspot/dashboard.html')
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hotspot/dashboard.html
+ERROR 2026-02-17 18:19:15,156 log 14212 19860 "GET / HTTP/1.1" 500 93234
+ERROR 2026-02-17 18:19:24,070 log 14212 19860 Internal Server Error: /
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\core\handlers\base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\DjangoProjects\ninecom_hotspot\hotspot\views.py", line 28, in dashboard
+    return render(request, 'hotspot/dashboard.html')
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "D:\DjangoProjects\ninecom_hotspot\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: hotspot/dashboard.html
+ERROR 2026-02-17 18:19:24,072 log 14212 19860 "GET / HTTP/1.1" 500 93097
+INFO 2026-02-17 18:19:56,078 autoreload 14212 12468 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-17 18:19:56,970 autoreload 23808 16900 Watching for file changes with StatReloader
+INFO 2026-02-17 18:20:36,616 log 23808 10296 "GET / HTTP/1.1" 200 16344
+INFO 2026-02-17 18:20:48,180 log 23808 10296 "GET /reports/analytics/ HTTP/1.1" 200 17825
+INFO 2026-02-17 18:21:03,030 log 23808 20504 "GET /reports/analytics/?days=7 HTTP/1.1" 200 17825
+INFO 2026-02-17 18:21:13,721 log 23808 20268 "GET /reports/usage/ HTTP/1.1" 200 18686
+INFO 2026-02-17 18:21:16,702 log 23808 20268 "GET /portal/logs/ HTTP/1.1" 200 48868
+INFO 2026-02-17 18:21:19,304 log 23808 20268 "GET /portal/compliance/ HTTP/1.1" 200 36249
+INFO 2026-02-17 18:21:25,266 log 23808 20268 "GET /reports/analytics/ HTTP/1.1" 200 17825
+INFO 2026-02-17 18:21:43,494 log 23808 20268 "GET /dashboard/ HTTP/1.1" 200 16344
+INFO 2026-02-17 18:22:04,979 log 23808 20268 "GET /reports/analytics/ HTTP/1.1" 200 17825
+INFO 2026-02-17 18:22:15,855 log 23808 20268 "GET /portal/members/ HTTP/1.1" 200 16098
+INFO 2026-02-17 18:24:12,379 log 23808 20268 "GET /portal/members/ HTTP/1.1" 200 16098
+INFO 2026-02-17 18:24:14,701 log 23808 20268 "GET /reports/analytics/ HTTP/1.1" 200 17983
+INFO 2026-02-17 18:24:25,202 log 23808 20268 "GET /portal/compliance/ HTTP/1.1" 200 36249
+INFO 2026-02-17 18:24:30,849 log 23808 20268 "GET /reports/usage/ HTTP/1.1" 200 18686
+INFO 2026-02-17 18:24:34,416 log 23808 20268 "GET /reports/analytics/ HTTP/1.1" 200 17983
+INFO 2026-02-17 18:49:10,771 autoreload 23808 16900 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-17 18:49:11,989 autoreload 23716 16952 Watching for file changes with StatReloader
+INFO 2026-02-17 18:49:53,895 autoreload 23716 16952 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-17 18:49:54,846 autoreload 18568 18608 Watching for file changes with StatReloader
+INFO 2026-02-17 18:57:37,852 autoreload 18568 18608 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-17 18:57:38,707 autoreload 16168 13852 Watching for file changes with StatReloader
+INFO 2026-02-17 18:58:04,705 log 16168 15844 "GET / HTTP/1.1" 200 16489
+INFO 2026-02-17 18:58:17,126 log 16168 15844 "GET / HTTP/1.1" 200 16489
+INFO 2026-02-17 18:58:41,452 log 16168 15844 "GET /reports/analytics HTTP/1.1" 301 0
+INFO 2026-02-17 18:58:42,301 log 16168 15844 "GET /reports/analytics/ HTTP/1.1" 200 18070
+INFO 2026-02-17 18:58:50,696 log 16168 15844 "GET /reports/usage/ HTTP/1.1" 200 18831
+INFO 2026-02-17 18:58:53,005 log 16168 15844 "GET /reports/traffic/ HTTP/1.1" 200 11828
+INFO 2026-02-17 18:59:08,806 log 16168 15844 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13706
+INFO 2026-02-17 18:59:30,967 autoreload 16168 13852 D:\DjangoProjects\ninecom_hotspot\hotspot\traffic_models.py changed, reloading.
+INFO 2026-02-17 18:59:32,002 autoreload 22796 15428 Watching for file changes with StatReloader
+INFO 2026-02-17 19:00:20,400 log 22796 15608 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13706
+INFO 2026-02-17 19:00:23,367 log 22796 15608 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13706
+INFO 2026-02-17 19:02:14,828 autoreload 22796 15428 D:\DjangoProjects\ninecom_hotspot\hotspot\migrations\0004_trafficlog.py changed, reloading.
+INFO 2026-02-17 19:02:15,704 autoreload 15024 9740 Watching for file changes with StatReloader
+INFO 2026-02-17 19:03:04,772 basehttp 15024 18020 - Broken pipe from ('127.0.0.1', 60704)
+INFO 2026-02-17 19:03:05,418 basehttp 15024 19488 - Broken pipe from ('127.0.0.1', 30388)
+INFO 2026-02-17 19:03:05,796 log 15024 3652 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13233
+INFO 2026-02-17 19:03:08,914 basehttp 15024 3652 - Broken pipe from ('127.0.0.1', 63057)
+INFO 2026-02-17 19:03:10,169 log 15024 16896 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13233
+INFO 2026-02-17 19:03:11,698 log 15024 16896 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13233
+INFO 2026-02-17 19:03:21,919 log 15024 16896 "GET /reports/traffic/?username=bob&date=2026-02-14 HTTP/1.1" 200 13233
+INFO 2026-02-17 19:03:26,131 log 15024 16896 "GET /reports/traffic/?username=bob&date=2026-02-13 HTTP/1.1" 200 13233
+INFO 2026-02-17 19:03:31,910 log 15024 16896 "GET /reports/traffic/?username=bob&date=2026-02-08 HTTP/1.1" 200 13233
+INFO 2026-02-17 19:04:21,132 autoreload 15024 9740 D:\DjangoProjects\ninecom_hotspot\hotspot\views.py changed, reloading.
+INFO 2026-02-17 19:04:22,512 autoreload 13176 22876 Watching for file changes with StatReloader
+INFO 2026-02-17 19:04:41,983 autoreload 13176 22876 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-17 19:04:42,994 autoreload 20092 17396 Watching for file changes with StatReloader
+INFO 2026-02-17 19:07:06,976 autoreload 20092 17396 D:\DjangoProjects\ninecom_hotspot\config\urls.py changed, reloading.
+INFO 2026-02-17 19:07:07,848 autoreload 17468 6656 Watching for file changes with StatReloader
+INFO 2026-02-17 19:08:03,302 log 17468 14268 "GET /reports/traffic/?username=bob&date=2026-02-08 HTTP/1.1" 200 13370
+INFO 2026-02-17 19:08:08,932 log 17468 14268 "GET /reports/search/ HTTP/1.1" 200 12449
+INFO 2026-02-17 19:08:17,448 log 17468 14268 "GET /reports/search/?q=bob HTTP/1.1" 200 32911
+INFO 2026-02-17 19:08:48,279 log 17468 14268 "GET /reports/usage/ HTTP/1.1" 200 18968
+INFO 2026-02-17 19:08:58,299 log 17468 14268 "GET /reports/traffic/ HTTP/1.1" 200 11965
+INFO 2026-02-17 19:09:13,342 log 17468 14268 "GET /reports/traffic/?username=bob&date=2026-02-16 HTTP/1.1" 200 13370
+INFO 2026-02-17 19:09:20,020 log 17468 14268 "GET /reports/traffic/?username=bob&date=2026-02-17 HTTP/1.1" 200 13370
+INFO 2026-02-17 19:09:25,083 log 17468 14268 "GET /reports/traffic/?username=bob&date=2026-02-13 HTTP/1.1" 200 13370
+INFO 2026-02-17 19:09:29,463 log 17468 14268 "GET /reports/traffic/?username=bob&date=2026-02-11 HTTP/1.1" 200 13370
+INFO 2026-02-17 19:09:35,132 log 17468 14268 "GET /reports/traffic/?username=bob&date=2026-02-09 HTTP/1.1" 200 13370
+INFO 2026-02-17 19:09:41,380 log 17468 14268 "GET /reports/usage/ HTTP/1.1" 200 18968
+INFO 2026-02-17 19:09:43,831 log 17468 14268 "GET /portal/logs/ HTTP/1.1" 200 50113
+INFO 2026-02-17 19:09:45,770 log 17468 14268 "GET /reports/traffic/ HTTP/1.1" 200 11965
+INFO 2026-02-17 19:09:46,945 log 17468 14268 "GET /reports/search/ HTTP/1.1" 200 12449
+INFO 2026-02-17 19:09:50,317 log 17468 14268 "GET /reports/search/?q=bob HTTP/1.1" 200 32911
+INFO 2026-02-17 19:10:13,303 log 17468 14268 "GET /reports/analytics/ HTTP/1.1" 200 18207
+INFO 2026-02-17 19:11:08,811 log 17468 14268 "GET /reports/traffic/ HTTP/1.1" 200 11965
+INFO 2026-02-17 19:13:20,621 log 17468 14268 "GET /dashboard/ HTTP/1.1" 200 16626
+INFO 2026-02-17 19:13:22,126 log 17468 14268 "GET /users/ HTTP/1.1" 200 218965
+INFO 2026-02-17 19:14:48,666 log 17468 14268 "GET /reports/search/ HTTP/1.1" 200 12449
+INFO 2026-02-17 19:14:55,000 log 17468 14268 "GET /reports/search/?q=test2 HTTP/1.1" 200 13264
+INFO 2026-02-17 19:15:05,670 log 17468 14268 "GET /reports/traffic/ HTTP/1.1" 200 11965
+INFO 2026-02-17 19:15:14,236 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:26,150 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-16 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:30,583 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:52,007 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:53,536 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:54,837 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:57,787 log 17468 14268 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-17 19:15:59,090 basehttp 17468 14268 - Broken pipe from ('127.0.0.1', 19988)
+INFO 2026-02-17 19:15:59,666 basehttp 17468 12316 - Broken pipe from ('127.0.0.1', 31486)
+INFO 2026-02-17 19:16:00,208 log 17468 20148 "GET /reports/traffic/?username=test2&date=2026-02-17 HTTP/1.1" 200 13374
+INFO 2026-02-18 09:44:54,721 log 17468 29188 "GET /portal/compliance/ HTTP/1.1" 200 37276
+INFO 2026-02-18 09:44:54,978 log 17468 29188 "GET /static/images/favicon.svg HTTP/1.1" 304 0
+INFO 2026-02-18 09:44:58,300 log 17468 29188 "GET /portal/logs/ HTTP/1.1" 200 50606
+INFO 2026-02-18 09:45:00,079 log 17468 29188 "GET /reports/traffic/ HTTP/1.1" 200 11965
+INFO 2026-02-18 09:45:17,624 log 17468 29188 "GET /reports/traffic/?username=bob&date=2026-02-17 HTTP/1.1" 200 13370
+INFO 2026-02-18 09:45:21,813 log 17468 29188 "GET /reports/usage/ HTTP/1.1" 200 19810
+INFO 2026-02-18 09:45:26,409 log 17468 29188 "GET /reports/traffic/ HTTP/1.1" 200 11965

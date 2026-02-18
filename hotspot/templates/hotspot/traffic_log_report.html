@@ -1,0 +1,80 @@
+{% extends 'hotspot/base.html' %}
+{% load static %}
+
+{% block title %}Traffic Logs - 9Com Hotspot{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Traffic Log Report (Compliance)</h1>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="username" class="form-label">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="username" name="username" value="{{ search_username }}" placeholder="e.g. user01" required>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="date" class="form-label">Date</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-calendar"></i></span>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ search_date }}" required>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if search_username and search_date %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-bold text-primary">
+            <i class="fas fa-list me-2"></i>Results for {{ search_username }} on {{ search_date }}
+        </h6>
+        <span class="badge bg-light text-dark border">{{ logs|length }} records found</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Time</th>
+                        <th>User IP</th>
+                        <th>Destination IP</th>
+                        <th>Website / URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="ps-4 text-nowrap">{{ log.time|date:"H:i:s" }}</td>
+                        <td><span class="badge bg-secondary font-monospace">{{ log.ip }}</span></td>
+                        <td><span class="badge bg-light text-dark border font-monospace">{{ log.destination_ip }}</span></td>
+                        <td class="text-break">{{ log.website }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="fas fa-search fa-3x mb-3 text-light"></i>
+                            <p class="mb-0">No traffic logs found for this user in the specified period.</p>
+                            <small>Ensure the user had an active session and traffic was logged.</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

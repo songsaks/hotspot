@@ -1,135 +1,148 @@
 {% extends 'hotspot/base.html' %}
-
-{% block title %}Dashboard - Cloud Hotspot System{% endblock %}
-
-{% block extra_css %}
-<style>
-    .welcome-container {
-        min-height: calc(100vh - 180px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .welcome-card {
-        max-width: 800px;
-        padding: 3rem;
-        animation: fadeIn 0.8s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .welcome-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #2563eb 0%, #f97316 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1rem;
-        letter-spacing: -0.02em;
-    }
-
-    .welcome-subtitle {
-        font-size: 1.1rem;
-        color: #64748b;
-        margin-bottom: 3rem;
-        line-height: 1.6;
-    }
-
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin-top: 2rem;
-    }
-
-    .feature-item {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 16px;
-        border: 1px solid #f1f5f9;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .feature-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        border-color: #2563eb;
-    }
-
-    .feature-icon {
-        width: 48px;
-        height: 48px;
-        background: #f8fafc;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-        font-size: 1.25rem;
-        color: #2563eb;
-        transition: all 0.3s ease;
-    }
-
-    .feature-item:hover .feature-icon {
-        background: #2563eb;
-        color: white;
-    }
-
-    .feature-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-        color: #1e293b;
-    }
-
-    .feature-desc {
-        font-size: 0.75rem;
-        color: #94a3b8;
-    }
-</style>
-{% endblock %}
+{% load static %}
 
 {% block content %}
-<div class="welcome-container">
-    <div class="welcome-card">
-        <div class="mb-4">
-            <span class="badge bg-soft-primary px-3 py-2 rounded-pill text-primary fw-bold" style="background: #eff6ff;">
-                <i class="fas fa-check-circle me-2"></i>ระบบพร้อมใช้งาน
-            </span>
-        </div>
-        
-        <h1 class="welcome-title">ยินดีต้อนรับสู่ระบบ Cloud Hotspot</h1>
-        <p class="welcome-subtitle">
-            ระบบบริหารจัดการอินเทอร์เน็ตหอพักและองค์กรแบบครบวงจร <br>
-            จัดการผู้ใช้งาน ความเร็ว และโปรไฟล์ ได้อย่างง่ายดายผ่านคลาวด์
-        </p>
+<div class="row mb-5">
+    <div class="col-12">
+        <h3 class="fw-bold text-primary mb-1">Welcome back, Admin!</h3>
+        <p class="text-muted">Overview of your hotspot system performance today.</p>
+    </div>
+</div>
 
-        <div class="feature-grid">
-            <a href="{% url 'user_list' %}" class="feature-item">
-                <div class="feature-icon"><i class="fas fa-users-cog"></i></div>
-                <div class="feature-name">จัดการผู้ใช้งาน</div>
-                <div class="feature-desc">ดูรายชื่อ เพิ่ม แก้ไข และลบผู้ใช้ hotspot</div>
-            </a>
-            
-            <a href="{% url 'user_import' %}" class="feature-item">
-                <div class="feature-icon"><i class="fas fa-file-import"></i></div>
-                <div class="feature-name">นำเข้าข้อมูล Excel</div>
-                <div class="feature-desc">เพิ่มผู้ใช้จำนวนมากพร้อมผูกโปรไฟล์ทันที</div>
-            </a>
-            
-            <a href="{% url 'manage_profiles' %}" class="feature-item">
-                <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
-                <div class="feature-name">โปรไฟล์และกลุ่ม</div>
-                <div class="feature-desc">กำหนดความเร็วและเวลาการใช้งานอินเทอร์เน็ต</div>
-            </a>
+<!-- Summary Cards -->
+<div class="row g-4 mb-5">
+    <!-- Active Today -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 me-3" style="background-color: #dbeafe; color: #2563eb;">
+                    <i class="fas fa-users fa-lg"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Active Today</h6>
+                    <h4 class="mb-0 fw-bold">{{ todays_active }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Online -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 me-3" style="background-color: #dcfce7; color: #16a34a;">
+                    <i class="fas fa-wifi fa-lg"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Live Online</h6>
+                    <h4 class="mb-0 fw-bold">{{ online_users }}</h4>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+                <a href="{% url 'active_sessions' %}" class="small text-success fw-bold text-decoration-none">View Sessions <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Users -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 me-3" style="background-color: #e0f2fe; color: #0284c7;">
+                    <i class="fas fa-address-book fa-lg"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Total Users</h6>
+                    <h4 class="mb-0 fw-bold">{{ total_users }}</h4>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+                <a href="{% url 'user_list' %}" class="small text-info fw-bold text-decoration-none">Manage Users <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100 bg-white">
+            <div class="card-body d-flex align-items-center">
+                <div class="rounded-circle p-3 me-3" style="background-color: #fee2e2; color: #dc2626;">
+                    <i class="fas fa-user-clock fa-lg"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Pending Requests</h6>
+                    <h4 class="mb-0 fw-bold">{{ pending_requests }}</h4>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+                <a href="{% url 'registration_requests' %}" class="small text-danger fw-bold text-decoration-none">Review Requests <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Quick Links / Shortcuts -->
+<div class="row g-4">
+    <div class="col-12">
+        <h5 class="fw-bold mb-3">Quick Actions</h5>
+    </div>
+    
+    <div class="col-md-4">
+        <a href="{% url 'analytics_dashboard' %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 services-card hover-lift">
+                <div class="card-body text-centerpy-4 d-flex align-items-center p-4">
+                    <div class="icon-box me-3 bg-light rounded text-primary p-3">
+                        <i class="fas fa-chart-pie fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-dark fw-bold mb-1">Analytics Dashboard</h6>
+                        <p class="text-muted small mb-0">View graphical reports & trends</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="{% url 'manage_vouchers' %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 services-card hover-lift">
+                <div class="card-body text-centerpy-4 d-flex align-items-center p-4">
+                    <div class="icon-box me-3 bg-light rounded text-warning p-3">
+                        <i class="fas fa-ticket-alt fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-dark fw-bold mb-1">Generate Vouchers</h6>
+                        <p class="text-muted small mb-0">Create temporary access tickets</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-4">
+        <a href="{% url 'user_import' %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 services-card hover-lift">
+                <div class="card-body text-centerpy-4 d-flex align-items-center p-4">
+                    <div class="icon-box me-3 bg-light rounded text-success p-3">
+                        <i class="fas fa-file-excel fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-dark fw-bold mb-1">Import Users</h6>
+                        <p class="text-muted small mb-0">Bulk add users from Excel</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+    }
+</style>
 {% endblock %}
