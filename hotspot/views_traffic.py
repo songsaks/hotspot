@@ -132,14 +132,16 @@ def traffic_log_report(request):
     })
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from .log_parser import enrich_logs
 
 @login_required
 def traffic_log_list(request):
     """
     General viewer for Traffic Logs.
-    Pull data to show beautifully.
+    Parses Mikrotik firewall/DNS logs to extract domains and IPs.
     """
     search_query = request.GET.get('q', '').strip()
+    resolve_dns = request.GET.get('resolve', '') == '1'
     
     # Use 'default' database
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
@@ -162,8 +164,118 @@ def traffic_log_list(request):
         logs_page = paginator.page(1)
     except EmptyPage:
         logs_page = paginator.page(paginator.num_pages)
+    
+    # Enrich with parsed data (domain, dst IP, port, protocol)
+    enriched_logs = enrich_logs(logs_page, resolve_dns=resolve_dns)
         
     return render(request, 'hotspot/traffic_log_list.html', {
         'logs': logs_page,
-        'search_query': search_query
+        'enriched_logs': enriched_logs,
+        'search_query': search_query,
+        'resolve_dns': resolve_dns,
     })
+
+
+from django.http import HttpResponse
+from .log_parser import parse_log_entry
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+@login_required
+def export_traffic_excel(request):
+    """
+    Export traffic logs to Excel (.xlsx) with parsed domain/IP info.
+    Respects current search filter. Max 5000 rows.
+    """
+    search_query = request.GET.get('q', '').strip()
+    
+    logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
+    
+    if search_query:
+        logs_queryset = logs_queryset.filter(
+            Q(source_ip__icontains=search_query) |
+            Q(destination_ip__icontains=search_query) |
+            Q(url__icontains=search_query) |
+            Q(method__icontains=search_query)
+        )
+    
+    # Limit to 5000 rows
+    logs = logs_queryset[:5000]
+    
+    # Create Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Traffic Logs"
+    
+    # Styles
+    header_font = Font(name='Calibri', bold=True, color='FFFFFF', size=11)
+    header_fill = PatternFill(start_color='1E293B', end_color='1E293B', fill_type='solid')
+    header_align = Alignment(horizontal='center', vertical='center')
+    thin_border = Border(
+        bottom=Side(style='thin', color='E2E8F0')
+    )
+    cell_font = Font(name='Calibri', size=10)
+    domain_font = Font(name='Calibri', size=10, bold=True, color='1D4ED8')
+    ip_font = Font(name='Consolas', size=10, color='0F766E')
+    
+    # Headers
+    headers = ['Type', 'Time', 'Router (NAS)', 'Client IP', 'Domain / Website', 'Dest IP', 'Port', 'Protocol']
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+    
+    # Data Rows
+    for row_idx, log in enumerate(logs, 2):
+        parsed = parse_log_entry(log.url, log.method)
+        
+        # Type
+        ws.cell(row=row_idx, column=1, value=parsed['log_type']).font = cell_font
+        
+        # Time (raw from DB)
+        ws.cell(row=row_idx, column=2, value=log.log_time.strftime('%Y-%m-%d %H:%M:%S') if log.log_time else '').font = cell_font
+        
+        # Router (NAS)
+        ws.cell(row=row_idx, column=3, value=log.nas_ip or '').font = ip_font
+        
+        # Client IP
+        client_ip = parsed['client_ip'] or log.source_ip
+        ws.cell(row=row_idx, column=4, value=client_ip).font = ip_font
+        
+        # Domain
+        domain = parsed['domain'] or ''
+        c = ws.cell(row=row_idx, column=5, value=domain)
+        c.font = domain_font if domain else cell_font
+        
+        # Dest IP
+        ws.cell(row=row_idx, column=6, value=parsed['dst_ip'] or '').font = ip_font
+        
+        # Port
+        ws.cell(row=row_idx, column=7, value=parsed['port_name'] or '').font = cell_font
+        
+        # Protocol
+        ws.cell(row=row_idx, column=8, value=parsed['protocol'] or '').font = cell_font
+        
+        # Row border
+        for col in range(1, 9):
+            ws.cell(row=row_idx, column=col).border = thin_border
+    
+    # Auto-size columns
+    col_widths = [8, 20, 15, 16, 35, 16, 10, 10]
+    for i, width in enumerate(col_widths, 1):
+        ws.column_dimensions[chr(64 + i)].width = width
+    
+    # Freeze top row
+    ws.freeze_panes = 'A2'
+    
+    # Response
+    from datetime import datetime as dt
+    filename = f"traffic_logs_{dt.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response

@@ -12,7 +12,7 @@ from hotspot.views import (
     admin_logs, compliance_report, export_compliance_csv,
     bulk_delete_users, analytics_dashboard,
 )
-from hotspot.views_traffic import traffic_log_report, traffic_log_list
+from hotspot.views_traffic import traffic_log_report, traffic_log_list, export_traffic_excel
 from hotspot.views_search import user_session_search
 
 from django.views.generic import RedirectView
@@ -54,6 +54,7 @@ urlpatterns = [
     path('reports/usage/', usage_report, name='usage_report'),
     path('reports/traffic/', traffic_log_report, name='traffic_log_report'),
     path('reports/traffic/list/', traffic_log_list, name='traffic_log_list'),
+    path('reports/traffic/export/', export_traffic_excel, name='export_traffic_excel'),
     path('reports/analytics/', analytics_dashboard, name='analytics_dashboard'),
     path('reports/search/', user_session_search, name='user_session_search'),
     

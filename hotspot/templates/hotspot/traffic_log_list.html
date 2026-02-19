@@ -2,99 +2,393 @@
 {% load static %}
 {% load tz %}
 
-{% block title %}All Traffic Logs - 9Com Hotspot{% endblock %}
+{% block title %}Traffic Logs - 9Com Hotspot{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .log-header h1 {
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+    .log-header .subtitle {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    .stat-pill {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #e2e8f0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+
+    /* Search Card */
+    .search-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        background: white;
+    }
+    .search-card .form-control {
+        border: none;
+        box-shadow: none;
+        font-size: 0.82rem;
+        padding-left: 0;
+    }
+    .search-card .form-control:focus {
+        box-shadow: none;
+    }
+    .search-card .input-group-text {
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+    }
+
+    /* Legend */
+    .legend-bar {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    /* Type Badges */
+    .type-dns {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #ede9fe;
+        color: #6d28d9;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+    }
+    .type-fw {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #fef3c7;
+        color: #b45309;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+    }
+    .type-unknown {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #f1f5f9;
+        color: #94a3b8;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+    }
+
+    /* Table */
+    .log-table {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        background: white;
+    }
+    .log-table table {
+        margin: 0;
+        font-size: 0.78rem;
+        table-layout: fixed;
+        width: 100%;
+    }
+    .log-table thead th {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.65rem 0.75rem;
+        white-space: nowrap;
+    }
+    .log-table tbody td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .log-table tbody tr:hover {
+        background: #fafbff;
+    }
+    .log-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Cell Styles */
+    .cell-time {
+        color: #64748b;
+        font-family: 'Courier New', monospace;
+        font-size: 0.72rem;
+        white-space: nowrap;
+    }
+    .cell-ip {
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        color: #0f766e;
+        font-weight: 600;
+    }
+    .cell-domain {
+        font-weight: 700;
+        color: #1d4ed8;
+        font-size: 0.8rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .cell-domain i {
+        color: #3b82f6;
+        font-size: 0.65rem;
+    }
+    .cell-destip {
+        font-family: 'Courier New', monospace;
+        font-size: 0.72rem;
+        color: #475569;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .port-tag {
+        display: inline-block;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 3px;
+    }
+    .port-tag.port-https {
+        background: #f0fdf4;
+        color: #15803d;
+        border-color: #bbf7d0;
+    }
+    .port-tag.port-http {
+        background: #fefce8;
+        color: #a16207;
+        border-color: #fde68a;
+    }
+    .port-tag.port-dns {
+        background: #ede9fe;
+        color: #6d28d9;
+        border-color: #ddd6fe;
+    }
+    .port-tag.port-other {
+        background: #f1f5f9;
+        color: #64748b;
+        border-color: #e2e8f0;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid #f1f5f9;
+        background: #fafbfc;
+    }
+    .pagination-bar .page-link {
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 6px !important;
+        margin: 0 2px;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+    }
+    .pagination-bar .page-item.disabled .page-link {
+        color: #cbd5e1;
+    }
+
+    /* Checkbox */
+    .dns-toggle {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #475569;
+    }
+    .dns-toggle .form-check-input:checked {
+        background-color: #6366f1;
+        border-color: #6366f1;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Traffic Logs (Raw Data)</h1>
-    <span class="badge bg-secondary">{{ logs.paginator.count }} Total Records</span>
-</div>
-
-<!-- Search Bar -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <form method="GET" class="row align-items-center">
-            <div class="col-md-10">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search IP, URL, Method..." autocomplete="off">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Search</button>
-            </div>
-        </form>
+<!-- Header -->
+<div class="log-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="fas fa-stream me-2"></i>Traffic Logs</h1>
+        <div class="subtitle">Real-time network activity from Mikrotik firewall &amp; DNS</div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <span class="stat-pill"><i class="fas fa-database me-1"></i>{{ logs.paginator.count|default:"0" }} records</span>
+        <a href="{% url 'export_traffic_excel' %}{% if search_query %}?q={{ search_query }}{% endif %}" class="stat-pill text-decoration-none" style="background:rgba(34,197,94,0.2); border-color:rgba(34,197,94,0.3); color:#22c55e; cursor:pointer;">
+            <i class="fas fa-file-excel me-1"></i>Export Excel
+        </a>
     </div>
 </div>
 
-<!-- Logs Table -->
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.85rem;">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-3 py-3">Time</th>
-                        <th class="py-3">Router (NAS)</th>
-                        <th class="py-3">Source IP</th>
-                        <th class="py-3">Destination IP</th>
-                        <th class="py-3">Details / Message</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td class="ps-3 text-nowrap fw-bold text-muted">{{ log.log_time|timezone:"UTC"|date:"Y-m-d H:i:s" }}</td>
-                        <td>
-                            {% if log.nas_ip %}
-                                <span class="badge bg-light text-dark border font-monospace">{{ log.nas_ip }}</span>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td><span class="badge bg-info bg-opacity-10 text-info font-monospace">{{ log.source_ip }}</span></td>
-                        <td><span class="badge bg-warning bg-opacity-10 text-dark font-monospace">{{ log.destination_ip }}</span></td>
-                        <td class="text-break">
-                            <!-- Try to display meaningful info -->
-                            {% if log.url and log.url != '0.0.0.0' and log.url != '-' %}
-                                <span class="fw-bold text-primary">{{ log.url }}</span>
-                            {% endif %}
-                            
-                            {% if log.method %}
-                                <small class="d-block text-muted" style="max-width: 400px; white-space: pre-wrap;">{{ log.method|truncatechars:150 }}</small>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="fas fa-database fa-3x mb-3 text-light"></i>
-                            <p>No traffic logs found matching your criteria.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<!-- Search -->
+<div class="search-card d-flex align-items-center">
+    <form method="GET" class="d-flex align-items-center w-100 gap-2">
+        <div class="input-group flex-grow-1">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by IP, domain, keyword...">
         </div>
+        <div class="form-check dns-toggle d-flex align-items-center gap-1 ms-2 me-2" style="white-space:nowrap;">
+            <input class="form-check-input" type="checkbox" name="resolve" value="1" id="chkDns" {% if resolve_dns %}checked{% endif %}>
+            <label class="form-check-label" for="chkDns">Resolve DNS</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm fw-bold px-3" style="white-space:nowrap;">
+            <i class="fas fa-filter me-1"></i>Filter
+        </button>
+    </form>
+</div>
+
+<!-- Legend -->
+<div class="legend-bar">
+    <span class="type-dns"><i class="fas fa-globe"></i> DNS</span> = Domain Query
+    <span class="type-fw"><i class="fas fa-exchange-alt"></i> FW</span> = Firewall Connection
+</div>
+
+<!-- Table -->
+<div class="log-table">
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    <th style="width:5%;" class="text-center">Type</th>
+                    <th style="width:14%;">Time</th>
+                    <th style="width:11%;">Router</th>
+                    <th style="width:13%;">Client IP</th>
+                    <th style="width:22%;">Domain / Website</th>
+                    <th style="width:13%;">Dest IP</th>
+                    <th style="width:7%;" class="text-center">Port</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in enriched_logs %}
+                <tr>
+                    <td class="text-center">
+                        {% if item.log_type == 'DNS' %}
+                            <span class="type-dns"><i class="fas fa-globe"></i></span>
+                        {% elif item.log_type == 'FW' %}
+                            <span class="type-fw"><i class="fas fa-exchange-alt"></i></span>
+                        {% else %}
+                            <span class="type-unknown"><i class="fas fa-question"></i></span>
+                        {% endif %}
+                    </td>
+
+                    <td class="cell-time">{{ item.log.log_time|timezone:"UTC"|date:"m-d H:i:s" }}</td>
+
+                    <td>
+                        {% if item.log.nas_ip %}
+                            <span class="cell-destip">{{ item.log.nas_ip }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:0.72rem;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="cell-ip">
+                            {% if item.client_ip %}{{ item.client_ip }}{% else %}{{ item.log.source_ip }}{% endif %}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if item.domain %}
+                            <span class="cell-domain"><i class="fas fa-globe me-1"></i>{{ item.domain }}</span>
+                        {% elif item.dst_ip %}
+                            <span class="cell-destip">{{ item.dst_ip }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:0.72rem;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.dst_ip %}
+                            <span class="cell-destip">{{ item.dst_ip }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:0.72rem;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+                        {% if item.port_name %}
+                            <span class="port-tag {% if item.port_name == 'HTTPS' %}port-https{% elif item.port_name == 'HTTP' %}port-http{% elif item.port_name == 'DNS' %}port-dns{% else %}port-other{% endif %}">{{ item.port_name }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:0.72rem;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="fas fa-inbox fa-2x mb-2" style="color:#e2e8f0;"></i>
+                        <p class="text-muted mb-0" style="font-size:0.8rem;">No traffic logs found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    
-    <!-- Pagination -->
+
     {% if logs.has_other_pages %}
-    <div class="card-footer bg-white py-3">
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mb-0">
+    <div class="pagination-bar">
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mb-0">
                 {% if logs.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page={{ logs.previous_page_number }}&q={{ search_query }}">&laquo; Previous</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}&q={{ search_query }}{% if resolve_dns %}&resolve=1{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">&laquo; Previous</span></li>
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                    </li>
                 {% endif %}
-                
-                <li class="page-item disabled"><span class="page-link">Page {{ logs.number }} of {{ logs.paginator.num_pages }}</span></li>
-                
+
+                <li class="page-item disabled">
+                    <span class="page-link" style="min-width:120px; text-align:center;">
+                        Page {{ logs.number }} / {{ logs.paginator.num_pages }}
+                    </span>
+                </li>
+
                 {% if logs.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ logs.next_page_number }}&q={{ search_query }}">Next &raquo;</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}&q={{ search_query }}{% if resolve_dns %}&resolve=1{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">Next &raquo;</span></li>
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                    </li>
                 {% endif %}
             </ul>
         </nav>
