@@ -246,15 +246,23 @@
     </div>
     <div class="d-flex gap-2 align-items-center">
         <span class="stat-pill"><i class="fas fa-database me-1"></i>{{ logs.paginator.count|default:"0" }} records</span>
-        <a href="{% url 'export_traffic_excel' %}{% if search_query %}?q={{ search_query }}{% endif %}" class="stat-pill text-decoration-none" style="background:rgba(34,197,94,0.2); border-color:rgba(34,197,94,0.3); color:#22c55e; cursor:pointer;">
+        <a href="{% url 'export_traffic_excel' %}?q={{ search_query }}&router={{ selected_router }}" class="stat-pill text-decoration-none" style="background:rgba(34,197,94,0.2); border-color:rgba(34,197,94,0.3); color:#22c55e; cursor:pointer;">
             <i class="fas fa-file-excel me-1"></i>Export Excel
         </a>
     </div>
 </div>
 
-<!-- Search -->
+<!-- Search & Filter -->
 <div class="search-card d-flex align-items-center">
     <form method="GET" class="d-flex align-items-center w-100 gap-2">
+        <!-- Router Filter -->
+        <select name="router" class="form-select form-select-sm" style="width:140px; font-size:0.78rem; flex-shrink:0;">
+            <option value="">All Routers</option>
+            {% for r in routers %}
+                <option value="{{ r }}" {% if r == selected_router %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+        </select>
+        <!-- Search -->
         <div class="input-group flex-grow-1">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by IP, domain, keyword...">
@@ -363,7 +371,7 @@
             <ul class="pagination pagination-sm justify-content-center mb-0">
                 {% if logs.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ logs.previous_page_number }}&q={{ search_query }}{% if resolve_dns %}&resolve=1{% endif %}">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
                             <i class="fas fa-chevron-left"></i>
                         </a>
                     </li>
@@ -381,7 +389,7 @@
 
                 {% if logs.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ logs.next_page_number }}&q={{ search_query }}{% if resolve_dns %}&resolve=1{% endif %}">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
                             <i class="fas fa-chevron-right"></i>
                         </a>
                     </li>

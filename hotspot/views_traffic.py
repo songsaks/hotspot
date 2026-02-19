@@ -142,9 +142,24 @@ def traffic_log_list(request):
     """
     search_query = request.GET.get('q', '').strip()
     resolve_dns = request.GET.get('resolve', '') == '1'
+    selected_router = request.GET.get('router', '').strip()
+    
+    # Get distinct routers for dropdown
+    routers = (
+        TrafficLog.objects.using('default')
+        .exclude(nas_ip__isnull=True)
+        .exclude(nas_ip='')
+        .values_list('nas_ip', flat=True)
+        .distinct()
+        .order_by('nas_ip')
+    )
     
     # Use 'default' database
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
+    
+    # Router filter
+    if selected_router:
+        logs_queryset = logs_queryset.filter(nas_ip=selected_router)
     
     if search_query:
         logs_queryset = logs_queryset.filter(
@@ -173,6 +188,8 @@ def traffic_log_list(request):
         'enriched_logs': enriched_logs,
         'search_query': search_query,
         'resolve_dns': resolve_dns,
+        'routers': routers,
+        'selected_router': selected_router,
     })
 
 
@@ -188,8 +205,12 @@ def export_traffic_excel(request):
     Respects current search filter. Max 5000 rows.
     """
     search_query = request.GET.get('q', '').strip()
+    selected_router = request.GET.get('router', '').strip()
     
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
+    
+    if selected_router:
+        logs_queryset = logs_queryset.filter(nas_ip=selected_router)
     
     if search_query:
         logs_queryset = logs_queryset.filter(

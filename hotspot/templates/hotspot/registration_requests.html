@@ -12,6 +12,34 @@
     .approval-form { background: #f8fafc; border-radius: 12px; padding: 1rem; border: 1px solid #f1f5f9; }
     .btn-approve { background: #10b981; color: white; border: none; font-weight: 700; border-radius: 8px; font-size: 0.75rem; padding: 0.5rem 1rem; }
     .btn-reject { background: #fff1f2; color: #e11d48; border: 1px solid #ffe4e6; font-weight: 700; border-radius: 8px; font-size: 0.75rem; padding: 0.5rem 1rem; }
+
+    .dup-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-right: 4px;
+        margin-top: 4px;
+    }
+    .dup-warn {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    .dup-danger {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+    .pending-card.has-warning {
+        border-left: 3px solid #f59e0b;
+    }
+    .pending-card.has-danger {
+        border-left: 3px solid #ef4444;
+    }
 </style>
 {% endblock %}
 
@@ -29,8 +57,24 @@
 <div class="row g-4">
     {% for user in pending_users %}
     <div class="col-12">
-        <div class="card border-0 shadow-sm pending-card">
+        <div class="card border-0 shadow-sm pending-card {% if user.already_exists or user.phone_exists %}has-danger{% elif user.is_dup_name or user.is_dup_phone %}has-warning{% endif %}">
             <div class="card-body p-4">
+                {% if user.already_exists or user.phone_exists or user.is_dup_name or user.is_dup_phone %}
+                <div class="mb-2">
+                    {% if user.already_exists %}
+                        <span class="dup-badge dup-danger"><i class="fas fa-exclamation-triangle"></i> Username already exists in system</span>
+                    {% endif %}
+                    {% if user.phone_exists %}
+                        <span class="dup-badge dup-danger"><i class="fas fa-phone-alt"></i> Phone already registered</span>
+                    {% endif %}
+                    {% if user.is_dup_name %}
+                        <span class="dup-badge dup-warn"><i class="fas fa-user-friends"></i> Duplicate name in queue</span>
+                    {% endif %}
+                    {% if user.is_dup_phone %}
+                        <span class="dup-badge dup-warn"><i class="fas fa-phone-alt"></i> Duplicate phone in queue</span>
+                    {% endif %}
+                </div>
+                {% endif %}
                 <div class="row align-items-center">
                     <div class="col-md-3">
                         <div class="info-label">Requested Account</div>

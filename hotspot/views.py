@@ -52,6 +52,37 @@ def dashboard(request):
 def registration_requests(request):
     pending_users = PendingUser.objects.all().order_by('-created_at')
     
+    # Detect potential duplicates
+    # 1. Same full_name or phone appearing multiple times in pending
+    from django.db.models import Count
+    dup_names = set(
+        PendingUser.objects.exclude(full_name='').exclude(full_name__isnull=True)
+        .values('full_name').annotate(cnt=Count('id')).filter(cnt__gt=1)
+        .values_list('full_name', flat=True)
+    )
+    dup_phones = set(
+        PendingUser.objects.exclude(phone='').exclude(phone__isnull=True)
+        .values('phone').annotate(cnt=Count('id')).filter(cnt__gt=1)
+        .values_list('phone', flat=True)
+    )
+    
+    # 2. Check if username/phone already exists in approved users
+    existing_usernames = set(
+        Radcheck.objects.filter(attribute='Cleartext-Password')
+        .values_list('username', flat=True)
+    )
+    existing_phones = set(
+        ApprovedUser.objects.exclude(phone='').exclude(phone__isnull=True)
+        .values_list('phone', flat=True)
+    )
+    
+    # Mark each pending user with duplicate flags
+    for user in pending_users:
+        user.is_dup_name = user.full_name and user.full_name in dup_names
+        user.is_dup_phone = user.phone and user.phone in dup_phones
+        user.already_exists = user.username in existing_usernames
+        user.phone_exists = user.phone and user.phone in existing_phones
+    
     # Get profiles for assignment
     with connection.cursor() as cursor:
         cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
