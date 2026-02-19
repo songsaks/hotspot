@@ -163,6 +163,7 @@ def traffic_log_list(request):
     
     if search_query:
         logs_queryset = logs_queryset.filter(
+            Q(nas_ip__icontains=search_query) |
             Q(source_ip__icontains=search_query) |
             Q(destination_ip__icontains=search_query) |
             Q(url__icontains=search_query) |
@@ -214,6 +215,7 @@ def export_traffic_excel(request):
     
     if search_query:
         logs_queryset = logs_queryset.filter(
+            Q(nas_ip__icontains=search_query) |
             Q(source_ip__icontains=search_query) |
             Q(destination_ip__icontains=search_query) |
             Q(url__icontains=search_query) |

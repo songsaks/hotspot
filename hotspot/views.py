@@ -345,14 +345,18 @@ def usage_report(request):
 
 @login_required
 def compliance_report(request):
-    nas_ip = request.GET.get('nas_ip', '10.1.1.2')
+    nas_ip = request.GET.get('nas_ip', '').strip()
     search_query = request.GET.get('search', '').strip()
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
     
     with connection.cursor() as cursor:
+        # Get available NAS IPs for dropdown
+        cursor.execute("SELECT DISTINCT nasipaddress FROM radacct ORDER BY nasipaddress")
+        available_nas = [row[0] for row in cursor.fetchall()]
+        
         # Aggregation: Monthly usage per user
-        cursor.execute("""
+        monthly_sql = """
             SELECT 
                 username, 
                 COUNT(*) as sessions,
@@ -361,10 +365,13 @@ def compliance_report(request):
                 SUM(acctoutputoctets) as total_out
             FROM radacct
             WHERE acctstarttime >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
-            GROUP BY username
-            ORDER BY total_in DESC
-            LIMIT 10
-        """)
+        """
+        monthly_params = []
+        if nas_ip and nas_ip != 'all':
+            monthly_sql += " AND nasipaddress = %s"
+            monthly_params.append(nas_ip)
+        monthly_sql += " GROUP BY username ORDER BY total_in DESC LIMIT 10"
+        cursor.execute(monthly_sql, monthly_params)
         monthly_stats = dictfetchall(cursor)
 
         # Main Log Query (Compliance)
@@ -374,9 +381,13 @@ def compliance_report(request):
                 framedipaddress as ip, acctsessiontime, acctinputoctets as download, 
                 acctoutputoctets as upload, nasipaddress
             FROM radacct
-            WHERE nasipaddress = %s
+            WHERE 1=1
         """
-        params = [nas_ip]
+        params = []
+        
+        if nas_ip and nas_ip != 'all':
+            sql += " AND nasipaddress = %s"
+            params.append(nas_ip)
         
         if start_date:
             sql += " AND acctstarttime >= %s"
@@ -399,7 +410,8 @@ def compliance_report(request):
         'search_query': search_query,
         'current_nas': nas_ip,
         'start_date': start_date,
-        'end_date': end_date
+        'end_date': end_date,
+        'available_nas': available_nas,
     })
 
 @login_required

@@ -74,8 +74,13 @@
 <div class="filter-panel btn-no-print">
     <form action="" method="GET" class="row g-2 align-items-end">
         <div class="col-md-2">
-            <label class="form-label text-small fw-bold">NAS IP Address</label>
-            <input type="text" name="nas_ip" class="form-control form-control-sm" value="{{ current_nas }}">
+            <label class="form-label text-small fw-bold">Router (NAS)</label>
+            <select name="nas_ip" class="form-select form-select-sm">
+                <option value="all" {% if current_nas == 'all' or current_nas == '' %}selected{% endif %}>All Routers</option>
+                {% for nas in available_nas %}
+                    <option value="{{ nas }}" {% if nas == current_nas %}selected{% endif %}>{{ nas }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div class="col-md-2">
             <label class="form-label text-small fw-bold">จากวันที่ (Start Date)</label>
