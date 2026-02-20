@@ -236,39 +236,63 @@ def user_autocomplete(request):
 @login_required
 def user_list(request):
     search_query = request.GET.get('search', '').strip()
-    with connection.cursor() as cursor:
-        if search_query:
-            cursor.execute("""
-                SELECT 
-                    rc.id, 
-                    rc.username, 
-                    rc.value as password, 
-                    rug.groupname, 
-                    au.id as is_self_reg,
-                    (SELECT 1 FROM radcheck rc2 WHERE rc2.username = rc.username AND rc2.attribute = 'Auth-Type' AND rc2.value = 'Reject' LIMIT 1) as is_disabled
-                FROM radcheck rc
-                LEFT JOIN radusergroup rug ON rc.username = rug.username
-                LEFT JOIN approved_users au ON rc.username = au.username
-                WHERE rc.attribute = 'Cleartext-Password' AND rc.username LIKE %s
-                ORDER BY rc.id DESC
-            """, [f'%{search_query}%'])
-        else:
-            cursor.execute("""
-                SELECT 
-                    rc.id, 
-                    rc.username, 
-                    rc.value as password, 
-                    rug.groupname, 
-                    au.id as is_self_reg,
-                    (SELECT 1 FROM radcheck rc2 WHERE rc2.username = rc.username AND rc2.attribute = 'Auth-Type' AND rc2.value = 'Reject' LIMIT 1) as is_disabled
-                FROM radcheck rc
-                LEFT JOIN radusergroup rug ON rc.username = rug.username
-                LEFT JOIN approved_users au ON rc.username = au.username
-                WHERE rc.attribute = 'Cleartext-Password'
-                ORDER BY rc.id DESC LIMIT 100
-            """)
+    allowed_routers = get_allowed_routers(request.user)
+    
+    # Base Query
+    sql = """
+        SELECT 
+            rc.id, 
+            rc.username, 
+            rc.value as password, 
+            rug.groupname, 
+            au.id as is_self_reg,
+            (SELECT 1 FROM radcheck rc2 WHERE rc2.username = rc.username AND rc2.attribute = 'Auth-Type' AND rc2.value = 'Reject' LIMIT 1) as is_disabled
+        FROM radcheck rc
+        LEFT JOIN radusergroup rug ON rc.username = rug.username
+        LEFT JOIN approved_users au ON rc.username = au.username
+        WHERE rc.attribute = 'Cleartext-Password'
+    """
+    
+    params = []
+    
+    # 1. Search Filter
+    if search_query:
+        sql += " AND rc.username LIKE %s"
+        params.append(f'%{search_query}%')
         
+    # 2. Branch Access Control
+    if allowed_routers is not None:
+        # User sees:
+        # a) Users who have ever connected to their allowed routers (radacct)
+        # b) Users they personally interacted with (AdminActivityLog)
+        
+        # Subquery for Usage
+        if not allowed_routers:
+            usage_condition = "1=0" # No routers allowed -> No usage visibility
+        else:
+            # Safe parameter injection for IN clause
+            placeholders = ','.join(['%s'] * len(allowed_routers))
+            usage_condition = f"rc.username IN (SELECT DISTINCT username FROM radacct WHERE nasipaddress IN ({placeholders}))"
+        
+        # Subquery for Admin Actions (Created/Approved by me)
+        admin_condition = "rc.username IN (SELECT target FROM admin_activity_logs WHERE admin_user = %s)"
+        
+        sql += f" AND ({usage_condition} OR {admin_condition})"
+        
+        # Append params in order:
+        if allowed_routers:
+            params.extend(allowed_routers)
+        params.append(request.user.username)
+
+    sql += " ORDER BY rc.id DESC"
+    
+    if not search_query:
+        sql += " LIMIT 100"
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql, params)
         users = dictfetchall(cursor)
+        
         cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
         profiles = dictfetchall(cursor)
 
@@ -741,15 +765,55 @@ def manage_profiles(request):
             elif attr == 'Mikrotik-Total-Limit': profiles_dict[gn]['quota'] = f"{int(val) // (1024*1024)} MB"
         
         profiles = list(profiles_dict.values())
-        cursor.execute("SELECT groupname, username FROM radusergroup")
+        # Filter users based on branch access
+        allowed_routers = get_allowed_routers(request.user)
+        
+        # User Access Subquery Logic
+        user_filter_sql = ""
+        params = []
+        
+        if allowed_routers is not None:
+            if not allowed_routers:
+                # No routers allowed -> Only see users created by self
+                user_filter_sql = "WHERE username IN (SELECT target FROM admin_activity_logs WHERE admin_user = %s)"
+                params.append(request.user.username)
+            else:
+                # See users from allowed routers OR created by self
+                placeholders = ','.join(['%s'] * len(allowed_routers))
+                usage_sub = f"SELECT DISTINCT username FROM radacct WHERE nasipaddress IN ({placeholders})"
+                admin_sub = "SELECT target FROM admin_activity_logs WHERE admin_user = %s"
+                
+                user_filter_sql = f"WHERE username IN ({usage_sub}) OR username IN ({admin_sub})"
+                params.extend(allowed_routers)
+                params.append(request.user.username)
+        
+        # Fetch group mappings with filtering
+        base_group_sql = "SELECT groupname, username FROM radusergroup"
+        if user_filter_sql:
+            # radusergroup doesn't have other fields to join easily on simple SQL without JOINs
+            # But the filter is on 'username'. 
+            # So: SELECT groupname, username FROM radusergroup WHERE username IN (...)
+            # Let's reuse the WHERE clause logic but apply it to the username column
+            base_group_sql += " " + user_filter_sql
+            
+        cursor.execute(base_group_sql, params)
         user_group_rows = dictfetchall(cursor)
+        
         group_users = {}
         for row in user_group_rows:
             gn, un = row['groupname'], row['username']
             if gn not in group_users: group_users[gn] = []
             group_users[gn].append(un)
-        for p in profiles: p['user_list'] = group_users.get(p['groupname'], [])
-        cursor.execute("SELECT DISTINCT username FROM radcheck")
+            
+        for p in profiles: 
+            p['user_list'] = group_users.get(p['groupname'], [])
+            
+        # Fetch available users for dropdown (Same filtering)
+        base_user_sql = "SELECT DISTINCT username FROM radcheck"
+        if user_filter_sql:
+            base_user_sql += " " + user_filter_sql
+            
+        cursor.execute(base_user_sql, params)
         users = dictfetchall(cursor)
 
     return render(request, 'hotspot/profile_manager.html', {'profiles': profiles, 'users': users})
