@@ -246,7 +246,7 @@
     </div>
     <div class="d-flex gap-2 align-items-center">
         <span class="stat-pill"><i class="fas fa-database me-1"></i>Showing {{ enriched_logs|length }} records</span>
-        <a href="{% url 'export_traffic_excel' %}?q={{ search_query }}&router={{ selected_router }}" class="stat-pill text-decoration-none" style="background:rgba(34,197,94,0.2); border-color:rgba(34,197,94,0.3); color:#22c55e; cursor:pointer;">
+        <a href="{% url 'export_traffic_excel' %}?q={{ search_query }}&router={{ selected_router }}{% if users_only %}&users_only=1{% endif %}{% if web_only %}&web_only=1{% endif %}&start_date={{ start_date }}&end_date={{ end_date }}" class="stat-pill text-decoration-none" style="background:rgba(34,197,94,0.2); border-color:rgba(34,197,94,0.3); color:#22c55e; cursor:pointer;">
             <i class="fas fa-file-excel me-1"></i>Export Excel
         </a>
     </div>
@@ -262,14 +262,23 @@
                 <option value="{{ r }}" {% if r == selected_router %}selected{% endif %}>{{ r }}</option>
             {% endfor %}
         </select>
+        <!-- Date Filter -->
+        <input type="datetime-local" name="start_date" class="form-control form-control-sm" value="{{ start_date }}" style="width:150px; font-size:0.75rem;" placeholder="Start Date">
+        <span class="text-muted small">-</span>
+        <input type="datetime-local" name="end_date" class="form-control form-control-sm" value="{{ end_date }}" style="width:150px; font-size:0.75rem;" placeholder="End Date">
+        
         <!-- Search -->
         <div class="input-group flex-grow-1">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search: Router, Client IP, Domain, Dest IP...">
+            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search...">
         </div>
         <div class="form-check dns-toggle d-flex align-items-center gap-1 ms-2" style="white-space:nowrap;">
             <input class="form-check-input" type="checkbox" name="users_only" value="1" id="chkUsers" {% if users_only %}checked{% endif %}>
             <label class="form-check-label" for="chkUsers"><i class="fas fa-user" style="font-size:0.65rem;"></i> Users Only</label>
+        </div>
+        <div class="form-check dns-toggle d-flex align-items-center gap-1 ms-2" style="white-space:nowrap;">
+            <input class="form-check-input" type="checkbox" name="web_only" value="1" id="chkWeb" {% if web_only %}checked{% endif %}>
+            <label class="form-check-label" for="chkWeb">Web Only</label>
         </div>
         <div class="form-check dns-toggle d-flex align-items-center gap-1 ms-2 me-2" style="white-space:nowrap;">
             <input class="form-check-input" type="checkbox" name="resolve" value="1" id="chkDns" {% if resolve_dns %}checked{% endif %}>
@@ -298,7 +307,7 @@
                     <th style="width:10%;">Router</th>
                     <th style="width:10%;">User</th>
                     <th style="width:11%;">Client IP</th>
-                    <th style="width:20%;">Domain / Website</th>
+                    <th style="width:20%;">URL</th>
                     <th style="width:11%;">Dest IP</th>
                     <th style="width:7%;" class="text-center">Port</th>
                 </tr>
@@ -384,7 +393,7 @@
             <ul class="pagination pagination-sm justify-content-center mb-0">
                 {% if before_id %}
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}{% if users_only %}&users_only=1{% endif %}">
+                        <a class="page-link" href="?q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}{% if users_only %}&users_only=1{% endif %}{% if web_only %}&web_only=1{% endif %}">
                             <i class="fas fa-angle-double-left me-1"></i> Latest
                         </a>
                     </li>
@@ -392,7 +401,7 @@
 
                 {% if has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?before={{ next_before_id }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}{% if users_only %}&users_only=1{% endif %}">
+                        <a class="page-link" href="?before={{ next_before_id }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}{% if users_only %}&users_only=1{% endif %}{% if web_only %}&web_only=1{% endif %}">
                             Older <i class="fas fa-chevron-right ms-1"></i>
                         </a>
                     </li>
