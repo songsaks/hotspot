@@ -138,13 +138,15 @@ from .log_parser import enrich_logs
 def traffic_log_list(request):
     """
     General viewer for Traffic Logs.
-    Parses Mikrotik firewall/DNS logs to extract domains and IPs.
+    Uses cursor-based pagination for performance on large tables.
     """
     search_query = request.GET.get('q', '').strip()
     resolve_dns = request.GET.get('resolve', '') == '1'
     selected_router = request.GET.get('router', '').strip()
+    before_id = request.GET.get('before', '')  # cursor: show records with id < this
+    per_page = 50
     
-    # Get distinct routers for dropdown
+    # Get distinct routers for dropdown (cached by DB, fast query)
     routers = (
         TrafficLog.objects.using('default')
         .exclude(nas_ip__isnull=True)
@@ -154,8 +156,8 @@ def traffic_log_list(request):
         .order_by('nas_ip')
     )
     
-    # Use 'default' database
-    logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
+    # Build queryset
+    logs_queryset = TrafficLog.objects.using('default').all().order_by('-id')
     
     # Router filter
     if selected_router:
@@ -170,27 +172,34 @@ def traffic_log_list(request):
             Q(method__icontains=search_query)
         )
     
-    # Pagination
-    paginator = Paginator(logs_queryset, 50) # 50 logs per page
-    page = request.GET.get('page')
+    # Cursor-based pagination: fetch before this ID
+    if before_id:
+        try:
+            logs_queryset = logs_queryset.filter(id__lt=int(before_id))
+        except ValueError:
+            pass
     
-    try:
-        logs_page = paginator.page(page)
-    except PageNotAnInteger:
-        logs_page = paginator.page(1)
-    except EmptyPage:
-        logs_page = paginator.page(paginator.num_pages)
+    # Fetch per_page + 1 to check if there are more
+    logs_list = list(logs_queryset[:per_page + 1])
+    has_next = len(logs_list) > per_page
+    logs_list = logs_list[:per_page]
+    
+    # Get next cursor (last item's ID)
+    next_before_id = logs_list[-1].id if logs_list and has_next else None
     
     # Enrich with parsed data (domain, dst IP, port, protocol)
-    enriched_logs = enrich_logs(logs_page, resolve_dns=resolve_dns)
+    enriched_logs = enrich_logs(logs_list, resolve_dns=resolve_dns)
         
     return render(request, 'hotspot/traffic_log_list.html', {
-        'logs': logs_page,
+        'logs_list': logs_list,
         'enriched_logs': enriched_logs,
         'search_query': search_query,
         'resolve_dns': resolve_dns,
         'routers': routers,
         'selected_router': selected_router,
+        'has_next': has_next,
+        'next_before_id': next_before_id,
+        'before_id': before_id,
     })
 
 

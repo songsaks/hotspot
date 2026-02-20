@@ -245,7 +245,7 @@
         <div class="subtitle">Real-time network activity from Mikrotik firewall &amp; DNS</div>
     </div>
     <div class="d-flex gap-2 align-items-center">
-        <span class="stat-pill"><i class="fas fa-database me-1"></i>{{ logs.paginator.count|default:"0" }} records</span>
+        <span class="stat-pill"><i class="fas fa-database me-1"></i>Showing {{ enriched_logs|length }} records</span>
         <a href="{% url 'export_traffic_excel' %}?q={{ search_query }}&router={{ selected_router }}" class="stat-pill text-decoration-none" style="background:rgba(34,197,94,0.2); border-color:rgba(34,197,94,0.3); color:#22c55e; cursor:pointer;">
             <i class="fas fa-file-excel me-1"></i>Export Excel
         </a>
@@ -365,37 +365,23 @@
         </table>
     </div>
 
-    {% if logs.has_other_pages %}
+    {% if has_next or before_id %}
     <div class="pagination-bar">
         <nav>
             <ul class="pagination pagination-sm justify-content-center mb-0">
-                {% if logs.has_previous %}
+                {% if before_id %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ logs.previous_page_number }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
-                            <i class="fas fa-chevron-left"></i>
+                        <a class="page-link" href="?q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
+                            <i class="fas fa-angle-double-left me-1"></i> Latest
                         </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link"><i class="fas fa-chevron-left"></i></span>
                     </li>
                 {% endif %}
 
-                <li class="page-item disabled">
-                    <span class="page-link" style="min-width:120px; text-align:center;">
-                        Page {{ logs.number }} / {{ logs.paginator.num_pages }}
-                    </span>
-                </li>
-
-                {% if logs.has_next %}
+                {% if has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ logs.next_page_number }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
-                            <i class="fas fa-chevron-right"></i>
+                        <a class="page-link" href="?before={{ next_before_id }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
+                            Older <i class="fas fa-chevron-right ms-1"></i>
                         </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link"><i class="fas fa-chevron-right"></i></span>
                     </li>
                 {% endif %}
             </ul>
