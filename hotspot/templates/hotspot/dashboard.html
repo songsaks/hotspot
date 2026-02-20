@@ -1,148 +1,226 @@
 {% extends 'hotspot/base.html' %}
 {% load static %}
 
-{% block content %}
-<div class="row mb-5">
-    <div class="col-12">
-        <h3 class="fw-bold text-primary mb-1">Welcome back, Admin!</h3>
-        <p class="text-muted">Overview of your hotspot system performance today.</p>
-    </div>
-</div>
-
-<!-- Summary Cards -->
-<div class="row g-4 mb-5">
-    <!-- Active Today -->
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 bg-white">
-            <div class="card-body d-flex align-items-center">
-                <div class="rounded-circle p-3 me-3" style="background-color: #dbeafe; color: #2563eb;">
-                    <i class="fas fa-users fa-lg"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Active Today</h6>
-                    <h4 class="mb-0 fw-bold">{{ todays_active }}</h4>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Live Online -->
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 bg-white">
-            <div class="card-body d-flex align-items-center">
-                <div class="rounded-circle p-3 me-3" style="background-color: #dcfce7; color: #16a34a;">
-                    <i class="fas fa-wifi fa-lg"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Live Online</h6>
-                    <h4 class="mb-0 fw-bold">{{ online_users }}</h4>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
-                <a href="{% url 'active_sessions' %}" class="small text-success fw-bold text-decoration-none">View Sessions <i class="fas fa-arrow-right ms-1"></i></a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Total Users -->
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 bg-white">
-            <div class="card-body d-flex align-items-center">
-                <div class="rounded-circle p-3 me-3" style="background-color: #e0f2fe; color: #0284c7;">
-                    <i class="fas fa-address-book fa-lg"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Total Users</h6>
-                    <h4 class="mb-0 fw-bold">{{ total_users }}</h4>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
-                <a href="{% url 'user_list' %}" class="small text-info fw-bold text-decoration-none">Manage Users <i class="fas fa-arrow-right ms-1"></i></a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Requests -->
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100 bg-white">
-            <div class="card-body d-flex align-items-center">
-                <div class="rounded-circle p-3 me-3" style="background-color: #fee2e2; color: #dc2626;">
-                    <i class="fas fa-user-clock fa-lg"></i>
-                </div>
-                <div>
-                    <h6 class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">Pending Requests</h6>
-                    <h4 class="mb-0 fw-bold">{{ pending_requests }}</h4>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
-                <a href="{% url 'registration_requests' %}" class="small text-danger fw-bold text-decoration-none">Review Requests <i class="fas fa-arrow-right ms-1"></i></a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Links / Shortcuts -->
-<div class="row g-4">
-    <div class="col-12">
-        <h5 class="fw-bold mb-3">Quick Actions</h5>
-    </div>
-    
-    <div class="col-md-4">
-        <a href="{% url 'analytics_dashboard' %}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100 services-card hover-lift">
-                <div class="card-body text-centerpy-4 d-flex align-items-center p-4">
-                    <div class="icon-box me-3 bg-light rounded text-primary p-3">
-                        <i class="fas fa-chart-pie fa-2x"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-dark fw-bold mb-1">Analytics Dashboard</h6>
-                        <p class="text-muted small mb-0">View graphical reports & trends</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="{% url 'manage_vouchers' %}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100 services-card hover-lift">
-                <div class="card-body text-centerpy-4 d-flex align-items-center p-4">
-                    <div class="icon-box me-3 bg-light rounded text-warning p-3">
-                        <i class="fas fa-ticket-alt fa-2x"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-dark fw-bold mb-1">Generate Vouchers</h6>
-                        <p class="text-muted small mb-0">Create temporary access tickets</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="{% url 'user_import' %}" class="text-decoration-none">
-            <div class="card border-0 shadow-sm h-100 services-card hover-lift">
-                <div class="card-body text-centerpy-4 d-flex align-items-center p-4">
-                    <div class="icon-box me-3 bg-light rounded text-success p-3">
-                        <i class="fas fa-file-excel fa-2x"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-dark fw-bold mb-1">Import Users</h6>
-                        <p class="text-muted small mb-0">Bulk add users from Excel</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-
+{% block extra_css %}
 <style>
-    .hover-lift {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    .page-header {
+        margin-bottom: 1.5rem;
     }
-    .hover-lift:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+    .page-header h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text);
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+    .page-header p {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin: 0.25rem 0 0;
+    }
+
+    /* Stat Cards */
+    .stat-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    @media (max-width: 992px) {
+        .stat-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+        .stat-cards { grid-template-columns: 1fr; }
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+    .stat-icon.blue    { background: #eff6ff; color: #3b82f6; }
+    .stat-icon.green   { background: #f0fdf4; color: #22c55e; }
+    .stat-icon.cyan    { background: #ecfeff; color: #06b6d4; }
+    .stat-icon.red     { background: #fef2f2; color: #ef4444; }
+    .stat-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 2px;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text);
+        line-height: 1;
+    }
+    .stat-link {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-decoration: none;
+    }
+    .stat-link:hover { text-decoration: underline; }
+
+    /* Quick Actions */
+    .section-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-title i {
+        color: var(--accent);
+        font-size: 0.75rem;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+    @media (max-width: 992px) {
+        .actions-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 576px) {
+        .actions-grid { grid-template-columns: 1fr; }
+    }
+
+    .action-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        text-decoration: none;
+        color: var(--text);
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--accent);
+        color: var(--text);
+    }
+    .action-icon {
+        width: 44px; height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .action-icon.purple  { background: #f5f3ff; color: #7c3aed; }
+    .action-icon.amber   { background: #fffbeb; color: #f59e0b; }
+    .action-icon.emerald { background: #ecfdf5; color: #10b981; }
+    .action-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 2px;
+    }
+    .action-desc {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin: 0;
     }
 </style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h2>Welcome back, {{ user.username }}!</h2>
+    <p>Overview of your hotspot system performance today.</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div>
+            <div class="stat-label">Active Today</div>
+            <div class="stat-value">{{ todays_active }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-wifi"></i></div>
+        <div>
+            <div class="stat-label">Live Online</div>
+            <div class="stat-value">{{ online_users }}</div>
+            <a href="{% url 'active_sessions' %}" class="stat-link">View Sessions <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon cyan"><i class="fas fa-address-book"></i></div>
+        <div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ total_users }}</div>
+            <a href="{% url 'user_list' %}" class="stat-link">Manage Users <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fas fa-user-clock"></i></div>
+        <div>
+            <div class="stat-label">Pending Requests</div>
+            <div class="stat-value">{{ pending_requests }}</div>
+            <a href="{% url 'registration_requests' %}" class="stat-link">Review <i class="fas fa-arrow-right ms-1"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="section-title"><i class="fas fa-bolt"></i> Quick Actions</div>
+<div class="actions-grid">
+    <a href="{% url 'analytics_dashboard' %}" class="action-card">
+        <div class="action-icon purple"><i class="fas fa-chart-pie"></i></div>
+        <div>
+            <div class="action-title">Analytics Dashboard</div>
+            <p class="action-desc">View graphical reports & trends</p>
+        </div>
+    </a>
+    <a href="{% url 'manage_vouchers' %}" class="action-card">
+        <div class="action-icon amber"><i class="fas fa-ticket-alt"></i></div>
+        <div>
+            <div class="action-title">Generate Tickets</div>
+            <p class="action-desc">Create temporary access tickets</p>
+        </div>
+    </a>
+    <a href="{% url 'user_import' %}" class="action-card">
+        <div class="action-icon emerald"><i class="fas fa-file-excel"></i></div>
+        <div>
+            <div class="action-title">Import Users</div>
+            <p class="action-desc">Bulk add users from Excel</p>
+        </div>
+    </a>
+</div>
 {% endblock %}

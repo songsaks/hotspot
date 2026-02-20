@@ -7,7 +7,7 @@
     .pending-card { border: 1px solid #f1f5f9; transition: all 0.2s; }
     .pending-card:hover { border-color: #0ea5e9; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
     .info-label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem; }
-    .info-value { font-size: 0.85rem; font-weight: 800; color: #1e293b; }
+    .info-value { font-size: 0.85rem; font-weight: 800; color: #1e293b; word-break: break-all; }
     
     .approval-form { background: #f8fafc; border-radius: 12px; padding: 1rem; border: 1px solid #f1f5f9; }
     .btn-approve { background: #10b981; color: white; border: none; font-weight: 700; border-radius: 8px; font-size: 0.75rem; padding: 0.5rem 1rem; }
@@ -39,6 +39,13 @@
     }
     .pending-card.has-danger {
         border-left: 3px solid #ef4444;
+    }
+
+    @media (max-width: 768px) {
+        .mb-4.d-flex { flex-direction: column; align-items: stretch !important; gap: 0.5rem; }
+        .approval-form { padding: 0.75rem; }
+        .approval-form .d-flex { flex-direction: column; gap: 0.5rem !important; }
+        .approval-form select { width: 100% !important; }
     }
 </style>
 {% endblock %}

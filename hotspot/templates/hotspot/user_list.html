@@ -8,7 +8,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
     
     .table thead th {
@@ -20,6 +22,7 @@
         font-weight: 700;
         border-bottom: 1px solid #f1f5f9;
         padding: 0.75rem 1rem;
+        white-space: nowrap;
     }
 
     .table tbody td {
@@ -45,12 +48,13 @@
         justify-content: center;
         margin-right: 12px;
         font-size: 0.8rem;
+        flex-shrink: 0;
     }
 
     .btn-action {
         width: 28px;
         height: 28px;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         border-radius: 6px;
@@ -109,6 +113,24 @@
     .autocomplete-items div { padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
     .autocomplete-items div:hover { background-color: #f8fafc; color: #3b82f6; }
     .autocomplete-active { background-color: #3b82f6 !important; color: #ffffff !important; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .page-header > div:last-child {
+            flex-wrap: wrap;
+        }
+        .search-wrapper {
+            width: 100%;
+            order: -1;
+        }
+        .profile-select {
+            min-width: 90px;
+        }
+    }
 </style>
 {% endblock %}
 
