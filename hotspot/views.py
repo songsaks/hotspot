@@ -29,20 +29,38 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 import csv
 
+from .utils import get_allowed_routers
+
 @login_required
 def dashboard(request):
-    # Summary Statistics
-    total_users = Radcheck.objects.count()
-    online_users = Radacct.objects.filter(acctstoptime__isnull=True).count()
-    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    todays_active = Radacct.objects.filter(acctstarttime__gte=today_start).values('username').distinct().count()
+    # Get allowed routers for this user
+    allowed_routers = get_allowed_routers(request.user)
+    
+    # Base querysets
+    online_qs = Radacct.objects.filter(acctstoptime__isnull=True)
+    today_active_qs = Radacct.objects.filter(acctstarttime__gte=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0))
+    
+    # Apply router filter if not superuser / explicitly set
+    if allowed_routers is not None:
+        online_qs = online_qs.filter(nasipaddress__in=allowed_routers)
+        today_active_qs = today_active_qs.filter(nasipaddress__in=allowed_routers)
+    
+    # Execute counts
+    online_users = online_qs.count()
+    todays_active = today_active_qs.values('username').distinct().count()
+    
+    # Global stats (Admins see all users/requests)
+    # For now, let's keep total_users global distinct users
+    total_users = Radcheck.objects.values('username').distinct().count()
     pending_requests = PendingUser.objects.count()
 
     context = {
         'total_users': total_users,
         'online_users': online_users,
         'todays_active': todays_active,
-        'pending_requests': pending_requests
+        'pending_requests': pending_requests,
+        'is_admin': request.user.is_superuser,
+        'allowed_routers': allowed_routers
     }
     return render(request, 'hotspot/dashboard.html', context)
 
@@ -309,22 +327,28 @@ def toggle_user_status(request, username):
 
 @login_required
 def active_sessions(request):
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT radacctid, username, framedipaddress, nasipaddress, 
-                   acctstarttime, acctsessiontime, acctinputoctets, acctoutputoctets, callingstationid
-            FROM radacct 
-            WHERE acctstoptime IS NULL 
-            ORDER BY acctstarttime DESC
-        """)
-        active_users = dictfetchall(cursor)
+    allowed_routers = get_allowed_routers(request.user)
+    
+    qs = Radacct.objects.filter(acctstoptime__isnull=True)
+    if allowed_routers is not None:
+        qs = qs.filter(nasipaddress__in=allowed_routers)
+        
+    qs = qs.order_by('-acctstarttime')
+    
+    # Use values() to get dicts similar to dictfetchall
+    active_users = list(qs.values(
+        'radacctid', 'username', 'framedipaddress', 'nasipaddress', 
+        'acctstarttime', 'acctsessiontime', 'acctinputoctets', 'acctoutputoctets', 'callingstationid'
+    ))
     
     return render(request, 'hotspot/active_sessions.html', {'sessions': active_users})
 
 @login_required
 def usage_report(request):
+    allowed_routers = get_allowed_routers(request.user)
+    
     with connection.cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT 
                 username, 
                 COUNT(*) as total_sessions,
@@ -333,9 +357,24 @@ def usage_report(request):
                 SUM(acctoutputoctets) as total_upload,
                 MAX(acctstarttime) as last_connected
             FROM radacct
+        """
+        params = []
+        
+        if allowed_routers is not None:
+             if not allowed_routers:
+                 sql += " WHERE 1=0"
+             else:
+                 placeholders = ','.join(['%s'] * len(allowed_routers))
+                 sql += f" WHERE nasipaddress IN ({placeholders})"
+                 params.extend(allowed_routers)
+        
+        sql += """
             GROUP BY username
             ORDER BY last_connected DESC
-        """)
+            LIMIT 1000
+        """
+        
+        cursor.execute(sql, params)
         usage_data = dictfetchall(cursor)
     
     return render(request, 'hotspot/usage_report.html', {
@@ -350,11 +389,33 @@ def compliance_report(request):
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
     
+    allowed_routers = get_allowed_routers(request.user)
+    
     with connection.cursor() as cursor:
         # Get available NAS IPs for dropdown
-        cursor.execute("SELECT DISTINCT nasipaddress FROM radacct ORDER BY nasipaddress")
-        available_nas = [row[0] for row in cursor.fetchall()]
+        if allowed_routers is None:
+            cursor.execute("SELECT DISTINCT nasipaddress FROM radacct ORDER BY nasipaddress")
+            available_nas = [row[0] for row in cursor.fetchall()]
+        else:
+            if not allowed_routers:
+                available_nas = []
+            else:
+                placeholders = ','.join(['%s'] * len(allowed_routers))
+                cursor.execute(f"SELECT DISTINCT nasipaddress FROM radacct WHERE nasipaddress IN ({placeholders}) ORDER BY nasipaddress", allowed_routers)
+                available_nas = [row[0] for row in cursor.fetchall()]
         
+        # Determine NAS Filter for queries
+        filter_nas_ips = None # None means All (Admin mode)
+        if nas_ip and nas_ip != 'all':
+            if allowed_routers is not None and nas_ip not in allowed_routers:
+                # Unauthorized access attempt or invalid selection
+                filter_nas_ips = [] 
+            else:
+                filter_nas_ips = [nas_ip]
+        elif allowed_routers is not None:
+            # User mode (all allowed routers)
+            filter_nas_ips = allowed_routers
+            
         # Aggregation: Monthly usage per user
         monthly_sql = """
             SELECT 
@@ -367,9 +428,15 @@ def compliance_report(request):
             WHERE acctstarttime >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         """
         monthly_params = []
-        if nas_ip and nas_ip != 'all':
-            monthly_sql += " AND nasipaddress = %s"
-            monthly_params.append(nas_ip)
+        
+        if filter_nas_ips is not None:
+            if not filter_nas_ips:
+                monthly_sql += " AND 1=0" # Force empty result
+            else:
+                placeholders = ','.join(['%s'] * len(filter_nas_ips))
+                monthly_sql += f" AND nasipaddress IN ({placeholders})"
+                monthly_params.extend(filter_nas_ips)
+                
         monthly_sql += " GROUP BY username ORDER BY total_in DESC LIMIT 10"
         cursor.execute(monthly_sql, monthly_params)
         monthly_stats = dictfetchall(cursor)
@@ -385,9 +452,13 @@ def compliance_report(request):
         """
         params = []
         
-        if nas_ip and nas_ip != 'all':
-            sql += " AND nasipaddress = %s"
-            params.append(nas_ip)
+        if filter_nas_ips is not None:
+            if not filter_nas_ips:
+                sql += " AND 1=0"
+            else:
+                placeholders = ','.join(['%s'] * len(filter_nas_ips))
+                sql += f" AND nasipaddress IN ({placeholders})"
+                params.extend(filter_nas_ips)
         
         if start_date:
             sql += " AND acctstarttime >= %s"
@@ -416,7 +487,24 @@ def compliance_report(request):
 
 @login_required
 def export_compliance_csv(request):
-    nas_ip = request.GET.get('nas_ip', '10.1.1.2')
+    nas_ip = request.GET.get('nas_ip', '').strip()
+    allowed_routers = get_allowed_routers(request.user)
+    
+    # Determine effective NAS IP to export
+    target_ip = nas_ip
+    if not target_ip:
+         # If no IP provided, try to pick one
+         if allowed_routers is not None and allowed_routers:
+              target_ip = allowed_routers[0]
+         elif allowed_routers is None:
+              # Admin default fallback if none specified (legacy behavior)
+              target_ip = '10.1.1.2' 
+    
+    # Security Check
+    if allowed_routers is not None:
+        if not target_ip or target_ip not in allowed_routers:
+             return HttpResponse("Unauthorized: You do not have access to this Router.", status=403)
+             
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="hotspot_logs_{datetime.now().strftime("%Y%m%d")}.csv"'
     response.write(u'\ufeff'.encode('utf8')) # BOM for Thai language in Excel
@@ -429,7 +517,7 @@ def export_compliance_csv(request):
             SELECT acctstarttime, acctstoptime, username, callingstationid, framedipaddress, 
                    acctsessiontime, acctinputoctets, acctoutputoctets 
             FROM radacct WHERE nasipaddress = %s ORDER BY acctstarttime DESC LIMIT 5000
-        """, [nas_ip])
+        """, [target_ip])
         for row in cursor.fetchall():
             writer.writerow(row)
     
@@ -844,8 +932,14 @@ def analytics_dashboard(request):
     Traffic Dashboard: Real-time status and historical trends.
     Uses Python-side aggregation for robustness against Timezone db issues.
     """
+    # Get allowed routers for this user
+    allowed_routers = get_allowed_routers(request.user)
+
     # 1. Real-time Active Users
-    active_users_count = Radacct.objects.using('default').filter(acctstoptime__isnull=True).count()
+    active_qs = Radacct.objects.using('default').filter(acctstoptime__isnull=True)
+    if allowed_routers is not None:
+        active_qs = active_qs.filter(nasipaddress__in=allowed_routers)
+    active_users_count = active_qs.count()
 
     # Timezone Setup (Local Time)
     tz = timezone.get_current_timezone()
@@ -856,6 +950,8 @@ def analytics_dashboard(request):
     
     # 2. Today's Total Bandwidth (GB)
     today_qs = Radacct.objects.using('default').filter(acctstarttime__gte=start_of_today)
+    if allowed_routers is not None:
+        today_qs = today_qs.filter(nasipaddress__in=allowed_routers)
     
     today_stats = today_qs.aggregate(
         total_in=Coalesce(Sum('acctinputoctets'), 0),
@@ -884,9 +980,11 @@ def analytics_dashboard(request):
     start_of_7d = start_of_today - timedelta(days=6)
     
     # Fetch raw data for Python processing
-    history_logs = Radacct.objects.using('default').filter(
-        acctstarttime__gte=start_of_7d
-    ).values('acctstarttime', 'username', 'acctinputoctets', 'acctoutputoctets')
+    history_qs = Radacct.objects.using('default').filter(acctstarttime__gte=start_of_7d)
+    if allowed_routers is not None:
+        history_qs = history_qs.filter(nasipaddress__in=allowed_routers)
+        
+    history_logs = history_qs.values('acctstarttime', 'username', 'acctinputoctets', 'acctoutputoctets')
     
     # Prepare Buckets
     history_map = {}

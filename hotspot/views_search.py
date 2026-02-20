@@ -34,6 +34,8 @@ def download_session_csv(queryset):
         ])
     return response
 
+from .utils import get_allowed_routers
+
 @login_required
 def user_session_search(request):
     """
@@ -51,7 +53,14 @@ def user_session_search(request):
             Q(username__icontains=query) | 
             Q(framedipaddress__icontains=query) | 
             Q(callingstationid__icontains=query)
-        ).order_by('-acctstarttime')
+        )
+        
+        # Apply router access control
+        allowed_routers = get_allowed_routers(request.user)
+        if allowed_routers is not None:
+            sessions_list = sessions_list.filter(nasipaddress__in=allowed_routers)
+
+        sessions_list = sessions_list.order_by('-acctstarttime')
 
         # Handle CSV Export if 'export=csv' is present in URL
         if export == 'csv':

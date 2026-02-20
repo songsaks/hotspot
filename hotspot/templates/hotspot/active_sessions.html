@@ -94,7 +94,8 @@
                     </td>
                     <td>
                         <div class="mb-1"><span class="ip-label">IP: {{ session.framedipaddress }}</span></div>
-                        <div><small class="text-muted">MAC: {{ session.callingstationid }}</small></div>
+                        <div class="mb-1"><small class="text-muted">MAC: {{ session.callingstationid }}</small></div>
+                        <div><small class="text-muted">Router: {{ session.nasipaddress }}</small></div>
                     </td>
                     <td>
                         <div class="data-usage"><i class="fas fa-arrow-up text-success me-1"></i> Upload: <b>{{ session.acctoutputoctets|filesizeformat }}</b></div>

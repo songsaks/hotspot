@@ -122,3 +122,21 @@ class AdminActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.admin_user} - {self.action} - {self.target}"
+
+
+from django.contrib.auth.models import User
+
+class UserRouterAccess(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='router_access')
+    router_ip = models.GenericIPAddressField(protocol='IPv4', help_text="The NAS IP address this user is allowed to view")
+    memo = models.CharField(max_length=100, blank=True, null=True, help_text="e.g. Branch Name")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_router_access'
+        unique_together = ('user', 'router_ip')
+        verbose_name = 'User Router Access'
+        verbose_name_plural = 'User Router Access'
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.router_ip} ({self.memo or ''})"

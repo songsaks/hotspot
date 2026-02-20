@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Radacct
 from .traffic_models import TrafficLog
+from .utils import get_allowed_routers
 
 @login_required
 def traffic_log_report(request):
@@ -58,6 +59,11 @@ def traffic_log_report(request):
                 Q(acctstoptime__gte=start_of_day) | Q(acctstoptime__isnull=True)
             )
             
+            # Apply router access control
+            allowed_routers = get_allowed_routers(request.user)
+            if allowed_routers is not None:
+                sessions = sessions.filter(nasipaddress__in=allowed_routers)
+            
             for session in sessions:
                 ip = session.framedipaddress
                 start_time = session.acctstarttime
@@ -89,7 +95,12 @@ def traffic_log_report(request):
                     Q(source_ip=ip) | Q(destination_ip=ip),
                     log_time__gte=search_start - timedelta(minutes=5),
                     log_time__lte=search_end + timedelta(minutes=5)
-                ).values('log_time', 'source_ip', 'destination_ip', 'url', 'method')
+                )
+                
+                if allowed_routers is not None:
+                    traffic_logs = traffic_logs.filter(nas_ip__in=allowed_routers)
+
+                traffic_logs = traffic_logs.values('log_time', 'source_ip', 'destination_ip', 'url', 'method')
 
                 for log in traffic_logs:
                     # Determine which field holds the meaningful info (URL vs Message)
@@ -194,8 +205,11 @@ def traffic_log_list(request):
     before_id = request.GET.get('before', '')  # cursor: show records with id < this
     per_page = 50
     
-    # Get distinct routers for dropdown (cached by DB, fast query)
-    routers = (
+    # Get allowed routers for this user
+    allowed_routers = get_allowed_routers(request.user)
+    
+    # Get distinct routers for dropdown (cached by DB)
+    routers_qs = (
         TrafficLog.objects.using('default')
         .exclude(nas_ip__isnull=True)
         .exclude(nas_ip='')
@@ -204,12 +218,25 @@ def traffic_log_list(request):
         .order_by('nas_ip')
     )
     
+    if allowed_routers is not None:
+        routers_qs = routers_qs.filter(nas_ip__in=allowed_routers)
+        
+    routers = routers_qs
+    
     # Build queryset
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-id')
     
-    # Router filter
+    # Router Access Control
+    if allowed_routers is not None:
+        logs_queryset = logs_queryset.filter(nas_ip__in=allowed_routers)
+    
+    # Router filter (User selection)
     if selected_router:
-        logs_queryset = logs_queryset.filter(nas_ip=selected_router)
+        # Security check: if user restricted, ensure selected router is allowed
+        if allowed_routers is not None and selected_router not in allowed_routers:
+             logs_queryset = logs_queryset.none()
+        else:
+             logs_queryset = logs_queryset.filter(nas_ip=selected_router)
     
     if search_query:
         logs_queryset = logs_queryset.filter(
@@ -281,10 +308,20 @@ def export_traffic_excel(request):
     search_query = request.GET.get('q', '').strip()
     selected_router = request.GET.get('router', '').strip()
     
+    # Access Control
+    allowed_routers = get_allowed_routers(request.user)
+    
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-log_time')
+
+    if allowed_routers is not None:
+        logs_queryset = logs_queryset.filter(nas_ip__in=allowed_routers)
     
     if selected_router:
-        logs_queryset = logs_queryset.filter(nas_ip=selected_router)
+        # Security check
+        if allowed_routers is not None and selected_router not in allowed_routers:
+            logs_queryset = logs_queryset.none()
+        else:
+            logs_queryset = logs_queryset.filter(nas_ip=selected_router)
     
     if search_query:
         logs_queryset = logs_queryset.filter(
