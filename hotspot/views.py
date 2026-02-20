@@ -561,7 +561,7 @@ def user_import(request):
             
             try:
                 # Read the excel file
-                df = pd.read_excel(excel_file)
+                df = pd.read_excel(excel_file, dtype=str)
                 
                 # Logic: Expecting columns 'username' and 'password'
                 if 'username' not in df.columns or 'password' not in df.columns:
