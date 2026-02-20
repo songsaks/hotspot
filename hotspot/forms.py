@@ -11,6 +11,12 @@ class HotspotUserForm(forms.ModelForm):
             'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'}),
         }
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if Radcheck.objects.filter(username=username).exists():
+            raise forms.ValidationError(f"Username '{username}' already exists in the system.")
+        return username
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.attribute = 'Cleartext-Password'

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from datetime import datetime
 from datetime import time  # Added import
-from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog
+from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, UserProfileGroup
 from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, Radacct
 from .traffic_models import TrafficLog
 from .forms import HotspotUserForm, UserImportForm
@@ -578,14 +578,35 @@ def manage_vouchers(request):
             groupname = request.POST.get('groupname')
             
             created_vouchers = []
+            max_retries = 5
+            
             for _ in range(count):
-                random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-                username = f"{prefix}{random_str}"
-                password = ''.join(random.choices(string.digits, k=4))
+                retry_count = 0
+                while retry_count < max_retries:
+                    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+                    username = f"{prefix}{random_str}"
+                    
+                    if not Radcheck.objects.filter(username=username).exists():
+                        password = ''.join(random.choices(string.digits, k=4))
+                        
+                        Radcheck.objects.create(username=username, attribute='Cleartext-Password', op=':=', value=password)
+                        cursor.execute("INSERT INTO radusergroup (username, groupname, priority) VALUES (%s, %s, %s)", [username, groupname, 1])
+                        
+                        # Log creation
+                        AdminActivityLog.objects.create(
+                            admin_user=request.user.username,
+                            action='Create Voucher',
+                            target=username,
+                            details=f"Generated voucher for group {groupname}"
+                        )
+                        
+                        created_vouchers.append({'user': username, 'pass': password})
+                        break # Success, move to next voucher
+                        
+                    retry_count += 1
                 
-                Radcheck.objects.create(username=username, attribute='Cleartext-Password', op=':=', value=password)
-                cursor.execute("INSERT INTO radusergroup (username, groupname, priority) VALUES (%s, %s, %s)", [username, groupname, 1])
-                created_vouchers.append({'user': username, 'pass': password})
+                if retry_count >= max_retries:
+                    messages.warning(request, f"Skipped creating a voucher after {max_retries} attempts due to existing username conflicts.")
             
             messages.success(request, f"Generated {count} temporary tickets for {groupname}")
             return render(request, 'hotspot/voucher_print.html', {'vouchers': created_vouchers, 'profile': groupname})
@@ -681,20 +702,44 @@ def user_import(request):
                     return render(request, 'hotspot/user_import.html', {'form': form})
 
                 count = 0
+                skipped_count = 0
                 imported_usernames = []
+                
                 for index, row in df.iterrows():
                     username = str(row['username']).strip()
                     password = str(row['password']).strip()
                     
                     if username and password:
-                        # Create or update Radcheck entry
-                        Radcheck.objects.update_or_create(
+                        # Check global uniqueness
+                        if Radcheck.objects.filter(username=username).exists():
+                            skipped_count += 1
+                            continue
+                            
+                        # Create Radcheck entry
+                        Radcheck.objects.create(
                             username=username,
                             attribute='Cleartext-Password',
-                            defaults={'op': ':=', 'value': password}
+                            op=':=', 
+                            value=password
                         )
                         imported_usernames.append(username)
                         count += 1
+                        
+                # Log Batch Import
+                if count > 0:
+                    details_msg = f"Imported {count} users from Excel."
+                    if selected_profile:
+                        details_msg += f" Assigned to {selected_profile}."
+                        
+                    AdminActivityLog.objects.create(
+                        admin_user=request.user.username,
+                        action='Import Users',
+                        target='Batch Import',
+                        details=details_msg
+                    )
+
+                if skipped_count > 0:
+                    messages.warning(request, f"Skipped {skipped_count} users because usernames already exist.")
                 
                 # Assign to profile if selected
                 if selected_profile and imported_usernames:
@@ -746,18 +791,60 @@ def manage_profiles(request):
                 if data_quota_mb and data_quota_mb.isdigit():
                     bytes_quota = int(data_quota_mb) * 1024 * 1024
                     cursor.execute("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (%s, %s, %s, %s)", [group_name, 'Mikrotik-Total-Limit', ':=', str(bytes_quota)])
+                
+                # Assign Ownership
+                UserProfileGroup.objects.create(
+                    groupname=group_name,
+                    created_by=request.user
+                )
+                
                 messages.success(request, f"Profile '{group_name}' created.")
             except Exception as e:
                 messages.error(request, f"Error: {str(e)}")
             return redirect('manage_profiles')
 
-        cursor.execute("SELECT groupname, attribute, value FROM radgroupreply")
+        # List Logic: Only show profiles I own OR global ones (unless Superuser)
+        if request.user.is_superuser:
+            cursor.execute("SELECT groupname, attribute, value FROM radgroupreply")
+        else:
+            # Get my groups + global groups
+            my_groups = UserProfileGroup.objects.filter(
+                Q(created_by=request.user) | Q(is_global=True)
+            ).values_list('groupname', flat=True)
+            
+            if not my_groups:
+                # Fallback: maybe legacy system hasn't recorded ownership yet?
+                # For safety, show nothing or only global.
+                # Let's assume emptiness.
+                cursor.execute("SELECT groupname, attribute, value FROM radgroupreply WHERE 1=0") 
+            else:
+                placeholders = ','.join(['%s'] * len(my_groups))
+                sql = f"SELECT groupname, attribute, value FROM radgroupreply WHERE groupname IN ({placeholders})"
+                cursor.execute(sql, list(my_groups))
+                
         reply_rows = dictfetchall(cursor)
         profiles_dict = {}
+        
+        # Get ownership info for display
+        ownership_map = { 
+            ug.groupname: {'owner': ug.created_by.username if ug.created_by else 'Unknown', 'is_global': ug.is_global}
+            for ug in UserProfileGroup.objects.all()
+        }
+
         for row in reply_rows:
             gn, attr, val = row['groupname'], row['attribute'], row['value']
             if gn not in profiles_dict:
-                profiles_dict[gn] = {'groupname': gn, 'speed': 'N/A', 'timeout': 'N/A', 'sessions': '1', 'idle': 'N/A', 'quota': 'Unlimited'}
+                # Add metadata
+                meta = ownership_map.get(gn, {'owner': 'System', 'is_global': False})
+                can_edit = request.user.is_superuser or (meta['owner'] == request.user.username)
+                
+                profiles_dict[gn] = {
+                    'groupname': gn, 
+                    'speed': 'N/A', 'timeout': 'N/A', 'sessions': '1', 'idle': 'N/A', 'quota': 'Unlimited',
+                    'owner': meta['owner'],
+                    'can_edit': can_edit
+                }
+            
             if attr == 'Mikrotik-Rate-Limit': profiles_dict[gn]['speed'] = val
             elif attr == 'Session-Timeout': profiles_dict[gn]['timeout'] = int(val) // 3600
             elif attr == 'Simultaneous-Use': profiles_dict[gn]['sessions'] = val
@@ -820,6 +907,12 @@ def manage_profiles(request):
 
 @login_required
 def edit_profile(request, groupname):
+    # Ownership Check
+    if not request.user.is_superuser:
+        if not UserProfileGroup.objects.filter(groupname=groupname, created_by=request.user).exists():
+             messages.error(request, "Access Denied: You do not have permission to edit this profile.")
+             return redirect('manage_profiles')
+
     with connection.cursor() as cursor:
         if request.method == 'POST':
             dl_speed = request.POST.get('download_speed', '').strip()
@@ -874,27 +967,45 @@ def edit_profile(request, groupname):
 
 @login_required
 def delete_profile(request, groupname):
-    """Delete a profile group and all associated rules with password confirmation."""
+    # Ownership Check
+    if not request.user.is_superuser:
+        if not UserProfileGroup.objects.filter(groupname=groupname, created_by=request.user).exists():
+             messages.error(request, "Access Denied: You do not have permission to delete this profile.")
+             return redirect('manage_profiles')
+
     if request.method == 'POST':
         password = request.POST.get('confirm_password')
-        target_password = os.getenv('BULK_DELETE_PASSWORD', 'super')
+        target_password = os.getenv('BULK_DELETE_PASSWORD', 'super') # Should use env var
         
+        # In a real app, each admin should have their own password or just confirm.
+        # But sticking to existing logic.
         if password != target_password:
-            messages.error(request, "Incorrect super password. Profile deletion aborted.")
+            messages.error(request, "Incorrect confirmation password.")
             return redirect('manage_profiles')
             
         with connection.cursor() as cursor:
+            # 1. Delete Radius Config
             cursor.execute("DELETE FROM radgroupreply WHERE groupname = %s", [groupname])
+            # 2. Unassign Users (or maybe keep them? usually unassign)
             cursor.execute("DELETE FROM radusergroup WHERE groupname = %s", [groupname])
+            
+        # 3. Delete Ownership Record
+        UserProfileGroup.objects.filter(groupname=groupname).delete()
         
-        messages.success(request, f"Profile '{groupname}' has been deleted successfully.")
+        messages.success(request, f"Profile '{groupname}' has been deleted.")
     else:
-        messages.error(request, "Invalid request method for profile deletion.")
+        messages.error(request, "Invalid request method.")
         
     return redirect('manage_profiles')
 
 @login_required
 def remove_user_from_group(request, username):
+    # Authorization Check
+    from .utils import is_authorized_to_manage_user
+    if not is_authorized_to_manage_user(request.user, username):
+         messages.error(request, "Access Denied: You cannot manage this user.")
+         return redirect('manage_profiles')
+
     with connection.cursor() as cursor:
         cursor.execute("DELETE FROM radusergroup WHERE username = %s", [username])
     messages.success(request, f"User '{username}' removed from group.")
@@ -904,6 +1015,13 @@ def remove_user_from_group(request, username):
 def assign_user_group(request):
     if request.method == 'POST':
         username, groupname = request.POST.get('username'), request.POST.get('groupname')
+        
+        # Authorization Check
+        from .utils import is_authorized_to_manage_user
+        if not is_authorized_to_manage_user(request.user, username):
+             messages.error(request, "Access Denied: You cannot manage this user.")
+             return redirect(request.META.get('HTTP_REFERER', 'manage_profiles'))
+
         with connection.cursor() as cursor:
             cursor.execute("SELECT username FROM radusergroup WHERE username = %s", [username])
             if cursor.fetchone():
