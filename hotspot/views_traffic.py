@@ -193,6 +193,11 @@ def enrich_logs(logs, resolve_dns=False):
                 if hostname:
                     domain = simplify_domain(hostname)
         
+        # Normalize type for template (DNS/FW)
+        display_type = 'FW'
+        if 'DNS' in (parsed['log_type'] or '').upper():
+            display_type = 'DNS'
+            
         enriched.append({
             'log': log,
             'id': log.id,
@@ -206,7 +211,7 @@ def enrich_logs(logs, resolve_dns=False):
             'protocol': parsed['protocol'],
             'port_name': parsed['port_name'],
             'username': user, 
-            'type': parsed['log_type']
+            'log_type': display_type
         })
     return enriched
 
