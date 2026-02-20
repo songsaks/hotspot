@@ -267,6 +267,10 @@
             <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search: Router, Client IP, Domain, Dest IP...">
         </div>
+        <div class="form-check dns-toggle d-flex align-items-center gap-1 ms-2" style="white-space:nowrap;">
+            <input class="form-check-input" type="checkbox" name="users_only" value="1" id="chkUsers" {% if users_only %}checked{% endif %}>
+            <label class="form-check-label" for="chkUsers"><i class="fas fa-user" style="font-size:0.65rem;"></i> Users Only</label>
+        </div>
         <div class="form-check dns-toggle d-flex align-items-center gap-1 ms-2 me-2" style="white-space:nowrap;">
             <input class="form-check-input" type="checkbox" name="resolve" value="1" id="chkDns" {% if resolve_dns %}checked{% endif %}>
             <label class="form-check-label" for="chkDns">Resolve DNS</label>
@@ -290,11 +294,12 @@
             <thead>
                 <tr>
                     <th style="width:5%;" class="text-center">Type</th>
-                    <th style="width:14%;">Time</th>
-                    <th style="width:11%;">Router</th>
-                    <th style="width:13%;">Client IP</th>
-                    <th style="width:22%;">Domain / Website</th>
-                    <th style="width:13%;">Dest IP</th>
+                    <th style="width:12%;">Time</th>
+                    <th style="width:10%;">Router</th>
+                    <th style="width:10%;">User</th>
+                    <th style="width:11%;">Client IP</th>
+                    <th style="width:20%;">Domain / Website</th>
+                    <th style="width:11%;">Dest IP</th>
                     <th style="width:7%;" class="text-center">Port</th>
                 </tr>
             </thead>
@@ -318,6 +323,14 @@
                             <span class="cell-destip">{{ item.log.nas_ip }}</span>
                         {% else %}
                             <span class="text-muted" style="font-size:0.72rem;">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.username %}
+                            <span style="font-size:0.72rem; font-weight:600; color:#6366f1;"><i class="fas fa-user me-1" style="font-size:0.6rem;"></i>{{ item.username }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:0.68rem;">—</span>
                         {% endif %}
                     </td>
 
@@ -371,7 +384,7 @@
             <ul class="pagination pagination-sm justify-content-center mb-0">
                 {% if before_id %}
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
+                        <a class="page-link" href="?q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}{% if users_only %}&users_only=1{% endif %}">
                             <i class="fas fa-angle-double-left me-1"></i> Latest
                         </a>
                     </li>
@@ -379,7 +392,7 @@
 
                 {% if has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?before={{ next_before_id }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}">
+                        <a class="page-link" href="?before={{ next_before_id }}&q={{ search_query }}&router={{ selected_router }}{% if resolve_dns %}&resolve=1{% endif %}{% if users_only %}&users_only=1{% endif %}">
                             Older <i class="fas fa-chevron-right ms-1"></i>
                         </a>
                     </li>

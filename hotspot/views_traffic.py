@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.db.models import Q
-from django.db.models import Q
 from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.contrib import messages
@@ -134,6 +133,54 @@ def traffic_log_report(request):
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .log_parser import enrich_logs
 
+
+def lookup_usernames_for_logs(logs_list):
+    """
+    Batch-lookup usernames from radacct for a list of TrafficLog objects.
+    
+    Strategy: For each unique source_ip in the logs, find the most recent
+    radacct session that used that IP (framedipaddress). In hotspot environments,
+    IPs are typically assigned per-user, so the most recent session owner
+    is the most likely user.
+    
+    Returns a dict: { log.id: username }
+    """
+    if not logs_list:
+        return {}
+    
+    # Collect unique source IPs
+    source_ips = set()
+    for log in logs_list:
+        if log.source_ip:
+            source_ips.add(log.source_ip)
+    
+    if not source_ips:
+        return {}
+    
+    # For each IP, find the most recent radacct session
+    # Query all matching sessions ordered by start time (newest first)
+    sessions = (
+        Radacct.objects.using('default')
+        .filter(framedipaddress__in=source_ips)
+        .values('username', 'framedipaddress', 'acctstarttime', 'acctstoptime')
+        .order_by('framedipaddress', '-acctstarttime')
+    )
+    
+    # Build IP -> username map (most recent session per IP)
+    ip_to_user = {}
+    for sess in sessions:
+        ip = sess['framedipaddress']
+        if ip not in ip_to_user:
+            ip_to_user[ip] = sess['username']
+    
+    # Map log.id -> username
+    result = {}
+    for log in logs_list:
+        if log.source_ip and log.source_ip in ip_to_user:
+            result[log.id] = ip_to_user[log.source_ip]
+    
+    return result
+
 @login_required
 def traffic_log_list(request):
     """
@@ -143,6 +190,7 @@ def traffic_log_list(request):
     search_query = request.GET.get('q', '').strip()
     resolve_dns = request.GET.get('resolve', '') == '1'
     selected_router = request.GET.get('router', '').strip()
+    users_only = request.GET.get('users_only', '') == '1'
     before_id = request.GET.get('before', '')  # cursor: show records with id < this
     per_page = 50
     
@@ -172,6 +220,16 @@ def traffic_log_list(request):
             Q(method__icontains=search_query)
         )
     
+    # Pre-filter: only IPs that exist in radacct (known users)
+    if users_only:
+        known_ips = (
+            Radacct.objects.using('default')
+            .exclude(framedipaddress='')
+            .values_list('framedipaddress', flat=True)
+            .distinct()
+        )
+        logs_queryset = logs_queryset.filter(source_ip__in=known_ips)
+    
     # Cursor-based pagination: fetch before this ID
     if before_id:
         try:
@@ -189,6 +247,11 @@ def traffic_log_list(request):
     
     # Enrich with parsed data (domain, dst IP, port, protocol)
     enriched_logs = enrich_logs(logs_list, resolve_dns=resolve_dns)
+    
+    # Lookup usernames from radacct (JOIN by IP + time)
+    username_map = lookup_usernames_for_logs(logs_list)
+    for item in enriched_logs:
+        item['username'] = username_map.get(item['log'].id, '')
         
     return render(request, 'hotspot/traffic_log_list.html', {
         'logs_list': logs_list,
@@ -197,6 +260,7 @@ def traffic_log_list(request):
         'resolve_dns': resolve_dns,
         'routers': routers,
         'selected_router': selected_router,
+        'users_only': users_only,
         'has_next': has_next,
         'next_before_id': next_before_id,
         'before_id': before_id,
