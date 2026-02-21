@@ -212,7 +212,27 @@ def self_register(request):
 
 @login_required
 def member_directory(request):
-    members = ApprovedUser.objects.all().order_by('-approved_at')
+    allowed_routers = get_allowed_routers(request.user)
+    
+    # Base queryset
+    members_qs = ApprovedUser.objects.all()
+    
+    if allowed_routers is not None:
+        # User sees:
+        # a) Members who have connected to their allowed routers (radacct)
+        # b) Members they personally approved/interacted with (AdminActivityLog)
+        
+        # 1. Usernames from usage
+        usage_usernames = Radacct.objects.filter(nasipaddress__in=allowed_routers).values_list('username', flat=True).distinct()
+        
+        # 2. Usernames from admin actions
+        admin_usernames = AdminActivityLog.objects.filter(admin_user=request.user.username).values_list('target', flat=True).distinct()
+        
+        members_qs = members_qs.filter(
+            Q(username__in=usage_usernames) | Q(username__in=admin_usernames)
+        )
+        
+    members = members_qs.order_by('-approved_at')
     return render(request, 'hotspot/member_directory.html', {'members': members})
 
 def dictfetchall(cursor):
@@ -377,8 +397,8 @@ def usage_report(request):
                 username, 
                 COUNT(*) as total_sessions,
                 SUM(acctsessiontime) as total_time,
-                SUM(acctinputoctets) as total_download,
-                SUM(acctoutputoctets) as total_upload,
+                SUM(acctoutputoctets) as total_download,
+                SUM(acctinputoctets) as total_upload,
                 MAX(acctstarttime) as last_connected
             FROM radacct
         """
@@ -469,8 +489,8 @@ def compliance_report(request):
         sql = """
             SELECT 
                 acctstarttime, acctstoptime, username, callingstationid as mac, 
-                framedipaddress as ip, acctsessiontime, acctinputoctets as download, 
-                acctoutputoctets as upload, nasipaddress
+                framedipaddress as ip, acctsessiontime, acctoutputoctets as download, 
+                acctinputoctets as upload, nasipaddress
             FROM radacct
             WHERE 1=1
         """
@@ -539,7 +559,7 @@ def export_compliance_csv(request):
     with connection.cursor() as cursor:
         cursor.execute("""
             SELECT acctstarttime, acctstoptime, username, callingstationid, framedipaddress, 
-                   acctsessiontime, acctinputoctets, acctoutputoctets 
+                   acctsessiontime, acctoutputoctets, acctinputoctets 
             FROM radacct WHERE nasipaddress = %s ORDER BY acctstarttime DESC LIMIT 5000
         """, [target_ip])
         for row in cursor.fetchall():
