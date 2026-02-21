@@ -681,9 +681,26 @@ def user_create(request):
 
 @login_required
 def user_import(request):
-    # Fetch existing profiles for the dropdown
+    # Fetch existing profiles for the dropdown (Filtered by ownership/global)
+    if request.user.is_superuser:
+        query = "SELECT DISTINCT groupname FROM radgroupreply"
+        params = []
+    else:
+        # Get my groups + global groups
+        my_groups = list(UserProfileGroup.objects.filter(
+            Q(created_by=request.user) | Q(is_global=True)
+        ).values_list('groupname', flat=True))
+        
+        if not my_groups:
+            query = "SELECT DISTINCT groupname FROM radgroupreply WHERE 1=0"
+            params = []
+        else:
+            placeholders = ','.join(['%s'] * len(my_groups))
+            query = f"SELECT DISTINCT groupname FROM radgroupreply WHERE groupname IN ({placeholders})"
+            params = my_groups
+
     with connection.cursor() as cursor:
-        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        cursor.execute(query, params)
         profiles = [ (row[0], row[0]) for row in cursor.fetchall() ]
 
     if request.method == 'POST':
