@@ -672,7 +672,16 @@ def user_create(request):
     if request.method == 'POST':
         form = HotspotUserForm(request.POST)
         if form.is_valid():
-            form.save()
+            user_instance = form.save()
+            
+            # Log creation so the branch admin can see this user in their list
+            AdminActivityLog.objects.create(
+                admin_user=request.user.username,
+                action='Create User',
+                target=user_instance.username,
+                details="Manually created user"
+            )
+            
             messages.success(request, 'User created successfully!')
             return redirect('user_list')
     else:
@@ -739,10 +748,19 @@ def user_import(request):
                             op=':=', 
                             value=password
                         )
+                        
+                        # IMPORTANT: Log each user creation so branch admins can see them
+                        AdminActivityLog.objects.create(
+                            admin_user=request.user.username,
+                            action='Import User',
+                            target=username,
+                            details=f"Part of batch import: {excel_file.name}"
+                        )
+                        
                         imported_usernames.append(username)
                         count += 1
                         
-                # Log Batch Import
+                # Log Batch Import Overview
                 if count > 0:
                     details_msg = f"Imported {count} users from Excel."
                     if selected_profile:
@@ -750,7 +768,7 @@ def user_import(request):
                         
                     AdminActivityLog.objects.create(
                         admin_user=request.user.username,
-                        action='Import Users',
+                        action='Import Users (Batch)',
                         target='Batch Import',
                         details=details_msg
                     )
