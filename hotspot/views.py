@@ -248,8 +248,29 @@ def user_autocomplete(request):
     term = request.GET.get('term', '')
     users = []
     if term:
+        allowed_routers = get_allowed_routers(request.user)
+        sql = "SELECT DISTINCT rc.username FROM radcheck rc WHERE rc.username LIKE %s"
+        params = [f'%{term}%']
+
+        if allowed_routers is not None:
+            if not allowed_routers:
+                usage_condition = "1=0"
+            else:
+                placeholders = ','.join(['%s'] * len(allowed_routers))
+                usage_condition = f"rc.username IN (SELECT DISTINCT username FROM radacct WHERE nasipaddress IN ({placeholders}))"
+            
+            admin_condition = "rc.username IN (SELECT target FROM admin_activity_logs WHERE admin_user = %s)"
+            
+            sql += f" AND ({usage_condition} OR {admin_condition})"
+            
+            if allowed_routers:
+                params.extend(allowed_routers)
+            params.append(request.user.username)
+
+        sql += " LIMIT 10"
+
         with connection.cursor() as cursor:
-            cursor.execute("SELECT username FROM radcheck WHERE username LIKE %s LIMIT 10", [f'%{term}%'])
+            cursor.execute(sql, params)
             users = [row[0] for row in cursor.fetchall()]
     return JsonResponse(users, safe=False)
 
@@ -305,9 +326,6 @@ def user_list(request):
         params.append(request.user.username)
 
     sql += " ORDER BY rc.id DESC"
-    
-    if not search_query:
-        sql += " LIMIT 100"
 
     with connection.cursor() as cursor:
         cursor.execute(sql, params)
@@ -316,8 +334,13 @@ def user_list(request):
         cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
         profiles = dictfetchall(cursor)
 
+    paginator = Paginator(users, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'hotspot/user_list.html', {
-        'users': users,
+        'users': page_obj,
+        'page_obj': page_obj,
         'profiles': profiles,
         'search_query': search_query
     })
