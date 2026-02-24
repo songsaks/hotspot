@@ -33,7 +33,7 @@ urlpatterns = [
     path('portal/users/bulk-delete/', bulk_delete_users, name='bulk_delete_users'),
     path('api/user-autocomplete/', user_autocomplete, name='user_autocomplete'),
 
-    path('admin/', admin.site.urls),
+    path('ninecom-hotspot-admin/', admin.site.urls),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='hotspot/login.html'), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     
