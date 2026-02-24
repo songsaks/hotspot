@@ -105,10 +105,10 @@ def parse_log_entry(url, method):
         'protocol': protocol
     }
 
-def lookup_usernames_for_logs(logs_list):
+def lookup_active_sessions_for_logs(logs_list):
     """
-    Returns a dict: { source_ip: username }
-    Finds the most recent user for each IP in the logs relative to the logs' time range.
+    Returns a dict: { ip: [list of sessions] } ordered by start time descending.
+    Bounded by time to ensure fast database execution.
     """
     if not logs_list:
         return {}
@@ -117,68 +117,91 @@ def lookup_usernames_for_logs(logs_list):
     min_time = None
     
     for log in logs_list:
-        # Check source_ip from DB
         if log.source_ip and log.source_ip.strip():
             source_ips.add(log.source_ip.strip())
             
-        # Track min log time to optimize query
-        if min_time is None or (log.log_time and log.log_time < min_time):
-            min_time = log.log_time
-        
-        # ALSO check if we can parse a client_ip from the URL (mikrotik logs)
         parsed = parse_log_entry(log.url, log.method)
         if parsed['client_ip']:
             source_ips.add(parsed['client_ip'])
+            
+        if min_time is None or (log.log_time and log.log_time < min_time):
+            min_time = log.log_time
     
-    if not source_ips:
+    if not source_ips or not min_time:
         return {}
-    
-    # Define search window based on logs
-    # Search sessions starting from (min_time - max_session_duration)
-    # Default buffer 24 hours just to be safe
-    from django.utils import timezone
-    if min_time:
-         # Ensure min_time is handled if it's naive/aware
-         search_start_time = min_time - timedelta(days=1)
-    else:
-         search_start_time = timezone.now() - timedelta(days=30) 
 
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Expand window to handle timezone skew (e.g., UTC vs Local) and fetch active users
+    search_start_time = min_time - timedelta(days=7)
+    
+    # Make naive datetime aware if necessary to prevent DB warnings/crashes
+    if timezone.is_naive(search_start_time) and timezone.is_aware(timezone.now()):
+        search_start_time = timezone.make_aware(search_start_time)
+    elif timezone.is_aware(search_start_time) and timezone.is_naive(timezone.now()):
+        search_start_time = timezone.make_naive(search_start_time)
+
+    # Use index-friendly bounded query
     sessions = (
         Radacct.objects.using('default')
         .filter(framedipaddress__in=source_ips)
-        # We relax the time filter to specific IPs found in logs
-        # But we can assume sessions must have started *before* the newest log?
-        # Actually, let's just look at sessions overlapping the log period or recently before.
-        # Simplest: Get recent sessions relative to the Log data.
-        .filter(acctstarttime__gte=search_start_time - timedelta(days=7)) # Look back a week from the oldest log
-        .values('username', 'framedipaddress', 'acctstarttime')
+        .filter(acctstarttime__gte=search_start_time)
+        .values('username', 'framedipaddress', 'acctstarttime', 'acctstoptime')
         .order_by('framedipaddress', '-acctstarttime')
     )
-    
-    ip_to_user = {}
-    for sess in sessions:
-        ip = sess['framedipaddress']
-        if ip:
-            clean_ip = ip.strip()
-            if clean_ip not in ip_to_user:
-                ip_to_user[clean_ip] = sess['username']
-            
-    return ip_to_user
+
+    ip_sessions = {}
+    for s in sessions:
+        ip = s['framedipaddress'].strip() if s['framedipaddress'] else ''
+        if not ip: continue
+        if ip not in ip_sessions:
+            ip_sessions[ip] = []
+        ip_sessions[ip].append(s)
+
+    return ip_sessions
 
 def enrich_logs(logs, resolve_dns=False):
     """
     Combines raw logs with parsed data (Domain, IP, User) for display.
     """
     enriched = []
-    # Pre-fetch usernames
-    username_map = lookup_usernames_for_logs(logs)
+    # Pre-fetch overlapping sessions
+    active_sessions = lookup_active_sessions_for_logs(logs)
     
     for log in logs:
         parsed = parse_log_entry(log.url, log.method)
         src_ip = parsed['client_ip'] or log.source_ip
+        src_ip = src_ip.strip() if src_ip else ''
         
-        # Get username safely
-        user = username_map.get(src_ip.strip() if src_ip else '', '-')
+        user = '-'
+        log_t = log.log_time
+        
+        if src_ip and log_t and src_ip in active_sessions:
+            # Helper to normalize timezones for comparison
+            def normalize_time(t1, ref):
+                from django.utils import timezone
+                if not t1 or not ref: return t1
+                if timezone.is_aware(t1) and timezone.is_naive(ref): return timezone.make_naive(t1)
+                if timezone.is_naive(t1) and timezone.is_aware(ref): return timezone.make_aware(t1, ref.tzinfo)
+                return t1
+
+            norm_log_t = normalize_time(log_t, active_sessions[src_ip][0]['acctstarttime'])
+            from datetime import timedelta
+            skew = timedelta(hours=14) # Massive skew allowance for UTC vs Bangkok (+7) issues
+            
+            # 1. Try to find exact time overlap
+            for s in active_sessions[src_ip]:
+                start = normalize_time(s['acctstarttime'], norm_log_t)
+                stop = normalize_time(s['acctstoptime'], norm_log_t) if s['acctstoptime'] else None
+                
+                if start and (start - skew) <= norm_log_t and (stop is None or (stop + skew) >= norm_log_t):
+                    user = s['username']
+                    break
+            
+            # 2. Add fallback: if no perfect overlap, just use the most recent login for this IP
+            if user == '-':
+                user = active_sessions[src_ip][0]['username']
         
         # Handle NO MATCH
         dst = parsed['dst_ip'] or log.destination_ip
@@ -301,27 +324,49 @@ def export_traffic_excel(request):
     # Limit to 5000 rows for performance
     logs = list(logs_queryset[:5000])
     
-    # Pre-fetch Usernames
-    username_map = lookup_usernames_for_logs(logs)
+    # Pre-fetch Sessions mapped to time ranges
+    active_sessions = lookup_active_sessions_for_logs(logs)
 
     # Resolve/Enrich for export if web_only is active
-    # We use a bit of logic from enrich_logs here
     final_logs = []
     for log in logs:
         parsed = parse_log_entry(log.url, log.method)
         domain = parsed['domain']
         dst = parsed['dst_ip'] or log.destination_ip
         
-        # DNS Resolution for export if needed (simplified)
-        if not domain and dst and dst != '-' and re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', str(dst)):
-             # We skip full resolve_cached here for export speed unless it's a small batch
-             # But for consistency, let's just use what parse_log_entry found
-             pass
-        
         if web_only and not domain:
              continue
              
-        final_logs.append((log, parsed, domain))
+        # Resolve username exact map
+        client_ip = parsed['client_ip'] or log.source_ip
+        client_ip = client_ip.strip() if client_ip else ''
+        user = '-'
+        log_t = log.log_time
+        
+        if client_ip and log_t and client_ip in active_sessions:
+            # Helper to normalize timezones for comparison
+            def normalize_time(t1, ref):
+                from django.utils import timezone
+                if not t1 or not ref: return t1
+                if timezone.is_aware(t1) and timezone.is_naive(ref): return timezone.make_naive(t1)
+                if timezone.is_naive(t1) and timezone.is_aware(ref): return timezone.make_aware(t1, ref.tzinfo)
+                return t1
+
+            norm_log_t = normalize_time(log_t, active_sessions[client_ip][0]['acctstarttime'])
+            from datetime import timedelta
+            skew = timedelta(hours=14)
+            
+            for s in active_sessions[client_ip]:
+                start = normalize_time(s['acctstarttime'], norm_log_t)
+                stop = normalize_time(s['acctstoptime'], norm_log_t) if s['acctstoptime'] else None
+                if start and (start - skew) <= norm_log_t and (stop is None or (stop + skew) >= norm_log_t):
+                    user = s['username']
+                    break
+            
+            if user == '-':
+                user = active_sessions[client_ip][0]['username']
+             
+        final_logs.append((log, parsed, domain, user))
 
     # Create Workbook
     wb = Workbook()
@@ -349,7 +394,7 @@ def export_traffic_excel(request):
         c.alignment = header_align
 
     # Data Rows
-    for row_idx, (log, parsed, domain) in enumerate(final_logs, 2):
+    for row_idx, (log, parsed, domain, username) in enumerate(final_logs, 2):
         client_ip = parsed['client_ip'] or log.source_ip
         
         # 1. Type
@@ -365,7 +410,6 @@ def export_traffic_excel(request):
         ws.cell(row=row_idx, column=4, value=client_ip).font = ip_font
         
         # 5. Username (New)
-        username = username_map.get(client_ip, '-')
         ws.cell(row=row_idx, column=5, value=username).font = user_font
         
         # 6. Domain / Website
@@ -560,7 +604,7 @@ def traffic_log_list(request):
     Uses cursor-based pagination for performance on large tables.
     """
     search_query = request.GET.get('q', '').strip()
-    resolve_dns = request.GET.get('resolve', '1') == '1'
+    resolve_dns = request.GET.get('resolve', '0') == '1'
     selected_router = request.GET.get('router', '').strip()
     users_only = request.GET.get('users_only', '') == '1'
     web_only = request.GET.get('web_only', '') == '1'
@@ -572,20 +616,24 @@ def traffic_log_list(request):
     # Get allowed routers for this user
     allowed_routers = get_allowed_routers(request.user)
     
-    # Get distinct routers for dropdown (cached by DB)
-    routers_qs = (
-        TrafficLog.objects.using('default')
-        .exclude(nas_ip__isnull=True)
-        .exclude(nas_ip='')
-        .values_list('nas_ip', flat=True)
-        .distinct()
-        .order_by('nas_ip')
-    )
+    # Get distinct routers for dropdown (Cache to avoid scanning millions of rows)
+    from django.core.cache import cache
     
-    if allowed_routers is not None:
-        routers_qs = routers_qs.filter(nas_ip__in=allowed_routers)
+    routers_list = cache.get('traffic_routers_list')
+    if routers_list is None:
+        routers_list = list(
+            TrafficLog.objects.using('default')
+            .exclude(nas_ip__isnull=True)
+            .exclude(nas_ip='')
+            .values_list('nas_ip', flat=True)
+            .distinct()
+            .order_by('nas_ip')
+        )
+        cache.set('traffic_routers_list', routers_list, 60 * 60 * 24) # Cache for 24h
         
-    routers = routers_qs
+    routers = routers_list
+    if allowed_routers is not None:
+        routers = [r for r in routers_list if r in allowed_routers]
     
     # Build queryset
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-id')
@@ -645,12 +693,16 @@ def traffic_log_list(request):
     
     # Pre-filter: only IPs that exist in radacct (known users)
     if users_only:
-        known_ips = (
-            Radacct.objects.using('default')
-            .exclude(framedipaddress='')
-            .values_list('framedipaddress', flat=True)
-            .distinct()
-        )
+        known_ips = cache.get('traffic_known_ips')
+        if known_ips is None:
+            known_ips = list(
+                Radacct.objects.using('default')
+                .exclude(framedipaddress='')
+                .values_list('framedipaddress', flat=True)
+                .distinct()
+            )
+            cache.set('traffic_known_ips', known_ips, 300) # Cache for 5 mins
+            
         logs_queryset = logs_queryset.filter(source_ip__in=known_ips)
     
     # Cursor-based pagination: fetch before this ID
