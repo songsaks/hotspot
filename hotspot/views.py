@@ -103,7 +103,19 @@ def registration_requests(request):
     
     # Get profiles for assignment
     with connection.cursor() as cursor:
-        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        if request.user.is_superuser:
+            cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        else:
+            my_groups = list(UserProfileGroup.objects.filter(
+                Q(created_by=request.user) | Q(is_global=True)
+            ).values_list('groupname', flat=True))
+            
+            if not my_groups:
+                cursor.execute("SELECT DISTINCT groupname FROM radgroupreply WHERE 1=0")
+            else:
+                placeholders = ','.join(['%s'] * len(my_groups))
+                cursor.execute(f"SELECT DISTINCT groupname FROM radgroupreply WHERE groupname IN ({placeholders})", my_groups)
+                
         profiles = dictfetchall(cursor)
         
     return render(request, 'hotspot/registration_requests.html', {
@@ -330,8 +342,20 @@ def user_list(request):
     with connection.cursor() as cursor:
         cursor.execute(sql, params)
         users = dictfetchall(cursor)
-        
-        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+
+        if request.user.is_superuser:
+            cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        else:
+            my_groups = list(UserProfileGroup.objects.filter(
+                Q(created_by=request.user) | Q(is_global=True)
+            ).values_list('groupname', flat=True))
+            
+            if not my_groups:
+                cursor.execute("SELECT DISTINCT groupname FROM radgroupreply WHERE 1=0")
+            else:
+                placeholders = ','.join(['%s'] * len(my_groups))
+                cursor.execute(f"SELECT DISTINCT groupname FROM radgroupreply WHERE groupname IN ({placeholders})", my_groups)
+                
         profiles = dictfetchall(cursor)
 
     paginator = Paginator(users, 50)
@@ -689,7 +713,19 @@ def manage_vouchers(request):
         """, [f"{current_prefix}%"])
         vouchers_list = dictfetchall(cursor)
 
-        cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        if request.user.is_superuser:
+            cursor.execute("SELECT DISTINCT groupname FROM radgroupreply")
+        else:
+            my_groups = list(UserProfileGroup.objects.filter(
+                Q(created_by=request.user) | Q(is_global=True)
+            ).values_list('groupname', flat=True))
+            
+            if not my_groups:
+                cursor.execute("SELECT DISTINCT groupname FROM radgroupreply WHERE 1=0")
+            else:
+                placeholders = ','.join(['%s'] * len(my_groups))
+                cursor.execute(f"SELECT DISTINCT groupname FROM radgroupreply WHERE groupname IN ({placeholders})", my_groups)
+                
         profiles = dictfetchall(cursor)
 
     return render(request, 'hotspot/vouchers.html', {
