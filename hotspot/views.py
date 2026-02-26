@@ -1243,8 +1243,9 @@ def analytics_dashboard(request):
     active_users_count = active_qs.count()
 
     # Timezone Setup (Local Time)
-    tz = timezone.get_current_timezone()
-    now_local = timezone.now().astimezone(tz)
+    now_local = timezone.now()
+    if timezone.is_aware(now_local):
+        now_local = now_local.astimezone(timezone.get_current_timezone())
     
     # Start of Today (Local Midnight)
     start_of_today = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1303,7 +1304,9 @@ def analytics_dashboard(request):
     for log in history_logs:
         # Convert Log Time (UTC/Aware) to Local Date
         if log['acctstarttime']:
-            local_dt = log['acctstarttime'].astimezone(tz)
+            local_dt = log['acctstarttime']
+            if timezone.is_aware(local_dt):
+                local_dt = local_dt.astimezone(timezone.get_current_timezone())
             d_str = local_dt.strftime('%Y-%m-%d')
             
             if d_str in history_map:
@@ -1330,7 +1333,9 @@ def analytics_dashboard(request):
     today_hours = today_qs.values('acctstarttime')
     for h in today_hours:
         if h['acctstarttime']:
-            local_dt = h['acctstarttime'].astimezone(tz)
+            local_dt = h['acctstarttime']
+            if timezone.is_aware(local_dt):
+                local_dt = local_dt.astimezone(timezone.get_current_timezone())
             hourly_counts[local_dt.hour] += 1
     
     context = {
