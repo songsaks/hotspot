@@ -325,7 +325,7 @@
                         {% endif %}
                     </td>
 
-                    <td class="cell-time">{{ item.log.log_time|timezone:"UTC"|date:"m-d H:i:s" }}</td>
+                    <td class="cell-time">{{ item.log.log_time|date:"m-d H:i:s" }}</td>
 
                     <td>
                         {% if item.log.nas_ip %}
