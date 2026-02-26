@@ -419,12 +419,34 @@ def toggle_user_status(request, username):
 @login_required
 def active_sessions(request):
     allowed_routers = get_allowed_routers(request.user)
+    selected_router = request.GET.get('router', '').strip()
     
     qs = Radacct.objects.filter(acctstoptime__isnull=True)
+    
+    # Restrict to user's assigned routers if applicable
     if allowed_routers is not None:
         qs = qs.filter(nasipaddress__in=allowed_routers)
         
+    # Apply user-selected router filter
+    if selected_router:
+        # Prevent accessing a router they don't have permission for
+        if allowed_routers is None or selected_router in allowed_routers:
+            qs = qs.filter(nasipaddress=selected_router)
+            
     qs = qs.order_by('-acctstarttime')
+    
+    # Get distinct routers for the dropdown
+    with connection.cursor() as cursor:
+        if allowed_routers is None:
+            cursor.execute("SELECT DISTINCT nasipaddress FROM radacct WHERE acctstoptime IS NULL ORDER BY nasipaddress")
+            available_nas = [row[0] for row in cursor.fetchall()]
+        else:
+            if not allowed_routers:
+                available_nas = []
+            else:
+                placeholders = ','.join(['%s'] * len(allowed_routers))
+                cursor.execute(f"SELECT DISTINCT nasipaddress FROM radacct WHERE acctstoptime IS NULL AND nasipaddress IN ({placeholders}) ORDER BY nasipaddress", allowed_routers)
+                available_nas = [row[0] for row in cursor.fetchall()]
     
     # Use values() to get dicts similar to dictfetchall
     active_users = list(qs.values(
@@ -432,7 +454,11 @@ def active_sessions(request):
         'acctstarttime', 'acctsessiontime', 'acctinputoctets', 'acctoutputoctets', 'callingstationid'
     ))
     
-    return render(request, 'hotspot/active_sessions.html', {'sessions': active_users})
+    return render(request, 'hotspot/active_sessions.html', {
+        'sessions': active_users,
+        'available_nas': available_nas,
+        'current_nas': selected_router
+    })
 
 @login_required
 def usage_report(request):

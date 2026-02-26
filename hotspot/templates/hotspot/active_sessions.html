@@ -59,10 +59,24 @@
         <h4 class="fw-800 mb-0">Live Sessions</h4>
         <p class="text-muted text-small">Monitor active users connected to the hotspot Network</p>
     </div>
-    <div class="text-end">
-        <span class="badge bg-light text-dark border">
-            <i class="fas fa-sync fa-spin me-2 text-primary"></i> Real-time Tracking
-        </span>
+    <div class="d-flex align-items-center gap-3">
+        <form method="GET" class="d-flex align-items-center bg-white border border-light shadow-sm rounded-pill px-2 py-1">
+            <i class="fas fa-router text-muted ms-2 me-1" style="font-size: 0.8rem;"></i>
+            <select name="router" class="form-select border-0 shadow-none fw-600 focus-ring-0" style="font-size: 0.8rem; background-color: transparent; cursor: pointer;" onchange="this.form.submit()">
+                <option value="">All Routers</option>
+                {% for nas in available_nas %}
+                    <option value="{{ nas }}" {% if nas == current_nas %}selected{% endif %}>Router: {{ nas }}</option>
+                {% endfor %}
+            </select>
+            {% if current_nas %}
+                <a href="?router=" class="btn btn-sm text-muted py-0 px-2" title="Clear Filter"><i class="fas fa-times"></i></a>
+            {% endif %}
+        </form>
+        <div class="text-end">
+            <span class="badge bg-light text-dark border">
+                <i class="fas fa-sync fa-spin me-2 text-primary"></i> Real-time Tracking
+            </span>
+        </div>
     </div>
 </div>
 
