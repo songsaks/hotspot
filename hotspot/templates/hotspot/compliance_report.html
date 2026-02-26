@@ -139,5 +139,39 @@
             </tbody>
         </table>
     </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="mt-4 mb-3 d-flex justify-content-center btn-no-print">
+        <ul class="pagination pagination-sm mb-0 shadow-sm" style="border-radius: 8px; overflow: hidden;">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&nas_ip={{ current_nas }}&start_date={{ start_date }}&end_date={{ end_date }}&search={{ search_query }}">&lt;&lt;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&nas_ip={{ current_nas }}&start_date={{ start_date }}&end_date={{ end_date }}&search={{ search_query }}">&lt;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&lt;&lt;</span></li>
+                <li class="page-item disabled"><span class="page-link">&lt;</span></li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link" style="padding: 0.35rem 1rem;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&nas_ip={{ current_nas }}&start_date={{ start_date }}&end_date={{ end_date }}&search={{ search_query }}">&gt;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&nas_ip={{ current_nas }}&start_date={{ start_date }}&end_date={{ end_date }}&search={{ search_query }}">&gt;&gt;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&gt;</span></li>
+                <li class="page-item disabled"><span class="page-link">&gt;&gt;</span></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

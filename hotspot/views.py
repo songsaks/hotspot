@@ -562,12 +562,17 @@ def compliance_report(request):
             sql += " AND (username LIKE %s OR callingstationid LIKE %s OR framedipaddress LIKE %s)"
             params.extend([f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'])
         
-        sql += " ORDER BY acctstarttime DESC LIMIT 1000"
+        sql += " ORDER BY acctstarttime DESC LIMIT 5000"
         cursor.execute(sql, params)
         logs = dictfetchall(cursor)
 
+    paginator = Paginator(logs, 100)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'hotspot/compliance_report.html', {
-        'logs': logs,
+        'logs': page_obj,
+        'page_obj': page_obj,
         'monthly_stats': monthly_stats,
         'search_query': search_query,
         'current_nas': nas_ip,
