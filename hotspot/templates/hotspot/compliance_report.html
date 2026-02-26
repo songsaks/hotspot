@@ -62,7 +62,7 @@
     {% for stat in monthly_stats %}
     <div class="stat-item">
         <div class="stat-user mb-1">{{ stat.username }}</div>
-        <div class="stat-value">{{ stat.total_in|filesizeformat }}</div>
+        <div class="stat-value">{{ stat.total_out|filesizeformat }}</div>
         <div class="stat-label">Total Download</div>
     </div>
     {% empty %}

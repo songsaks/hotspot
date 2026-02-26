@@ -554,7 +554,7 @@ def compliance_report(request):
                 monthly_sql += f" AND nasipaddress IN ({placeholders})"
                 monthly_params.extend(filter_nas_ips)
                 
-        monthly_sql += " GROUP BY username ORDER BY total_in DESC LIMIT 10"
+        monthly_sql += " GROUP BY username ORDER BY total_out DESC LIMIT 10"
         cursor.execute(monthly_sql, monthly_params)
         monthly_stats = dictfetchall(cursor)
 
