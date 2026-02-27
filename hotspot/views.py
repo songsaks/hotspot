@@ -49,9 +49,17 @@ def dashboard(request):
     online_users = online_qs.count()
     todays_active = today_active_qs.values('username').distinct().count()
     
-    # Global stats (Admins see all users/requests)
-    # For now, let's keep total_users global distinct users
-    total_users = Radcheck.objects.values('username').distinct().count()
+    # Calculate total users based on branch visibility (similar to user_list)
+    if allowed_routers is None:
+        total_users = Radcheck.objects.values('username').distinct().count()
+    else:
+        usage_usernames = set()
+        if allowed_routers:
+            usage_usernames = set(Radacct.objects.filter(nasipaddress__in=allowed_routers).values_list('username', flat=True).distinct())
+        admin_usernames = set(AdminActivityLog.objects.filter(admin_user=request.user.username).values_list('target', flat=True).distinct())
+        allowed_usernames = usage_usernames.union(admin_usernames)
+        total_users = Radcheck.objects.filter(username__in=allowed_usernames).values('username').distinct().count()
+
     pending_requests = PendingUser.objects.count()
 
     context = {
