@@ -154,3 +154,16 @@ class UserProfileGroup(models.Model):
     
     def __str__(self):
         return self.groupname
+
+class UserNasAssignment(models.Model):
+    username = models.CharField(max_length=64)
+    nasipaddress = models.GenericIPAddressField(protocol='IPv4')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'user_nas_assignment'
+        managed = True
+        unique_together = ('username', 'nasipaddress')
+        
+    def __str__(self):
+        return f"{self.username} -> {self.nasipaddress}"

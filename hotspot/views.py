@@ -13,7 +13,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from datetime import datetime
 from datetime import time  # Added import
-from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, UserProfileGroup
+from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, UserProfileGroup, UserNasAssignment
 from .models import Radcheck, PendingUser, ApprovedUser, AdminActivityLog, Radacct
 from .traffic_models import TrafficLog
 from .forms import HotspotUserForm, UserImportForm
@@ -56,6 +56,8 @@ def dashboard(request):
         usage_usernames = set()
         if allowed_routers:
             usage_usernames = set(Radacct.objects.filter(nasipaddress__in=allowed_routers).values_list('username', flat=True).distinct())
+            assignment_usernames = set(UserNasAssignment.objects.filter(nasipaddress__in=allowed_routers).values_list('username', flat=True).distinct())
+            usage_usernames = usage_usernames.union(assignment_usernames)
         admin_usernames = set(AdminActivityLog.objects.filter(admin_user=request.user.username).values_list('target', flat=True).distinct())
         allowed_usernames = usage_usernames.union(admin_usernames)
         total_users = Radcheck.objects.filter(username__in=allowed_usernames).values('username').distinct().count()
@@ -172,6 +174,15 @@ def approve_user(request, pk):
                 details=f"Approved and assigned to profile: {groupname}"
             )
             
+            # Bind user to the admin's allowed NAS IPs
+            allowed_routers = get_allowed_routers(request.user)
+            if allowed_routers:
+                for router_ip in allowed_routers:
+                    UserNasAssignment.objects.get_or_create(
+                        username=pending.username, 
+                        nasipaddress=router_ip
+                    )
+            
             messages.success(request, f"User '{pending.username}' approved and assigned to '{groupname}'.")
         else:
             messages.error(request, "Please select a profile.")
@@ -245,11 +256,14 @@ def member_directory(request):
         # 1. Usernames from usage
         usage_usernames = Radacct.objects.filter(nasipaddress__in=allowed_routers).values_list('username', flat=True).distinct()
         
-        # 2. Usernames from admin actions
+        # 2. Usernames from explicit assignment
+        assignment_usernames = UserNasAssignment.objects.filter(nasipaddress__in=allowed_routers).values_list('username', flat=True).distinct()
+        
+        # 3. Usernames from admin actions
         admin_usernames = AdminActivityLog.objects.filter(admin_user=request.user.username).values_list('target', flat=True).distinct()
         
         members_qs = members_qs.filter(
-            Q(username__in=usage_usernames) | Q(username__in=admin_usernames)
+            Q(username__in=usage_usernames) | Q(username__in=assignment_usernames) | Q(username__in=admin_usernames)
         )
         
     members = members_qs.order_by('-approved_at')
@@ -275,16 +289,19 @@ def user_autocomplete(request):
         if allowed_routers is not None:
             if not allowed_routers:
                 usage_condition = "1=0"
+                assignment_condition = "1=0"
             else:
                 placeholders = ','.join(['%s'] * len(allowed_routers))
                 usage_condition = f"rc.username IN (SELECT DISTINCT username FROM radacct WHERE nasipaddress IN ({placeholders}))"
+                assignment_condition = f"rc.username IN (SELECT username FROM user_nas_assignment WHERE nasipaddress IN ({placeholders}))"
             
             admin_condition = "rc.username IN (SELECT target FROM admin_activity_logs WHERE admin_user = %s)"
             
-            sql += f" AND ({usage_condition} OR {admin_condition})"
+            sql += f" AND ({usage_condition} OR {assignment_condition} OR {admin_condition})"
             
             if allowed_routers:
                 params.extend(allowed_routers)
+                params.extend(allowed_routers) # For assignment
             params.append(request.user.username)
 
         sql += " LIMIT 10"
@@ -307,6 +324,10 @@ def user_list(request):
             rc.value as password, 
             rug.groupname, 
             au.id as is_self_reg,
+            COALESCE(
+                (SELECT GROUP_CONCAT(DISTINCT nasipaddress SEPARATOR ', ') FROM user_nas_assignment una WHERE una.username = rc.username),
+                (SELECT GROUP_CONCAT(DISTINCT nasipaddress SEPARATOR ', ') FROM radacct ra WHERE ra.username = rc.username)
+            ) as assigned_routers,
             (SELECT 1 FROM radcheck rc2 WHERE rc2.username = rc.username AND rc2.attribute = 'Auth-Type' AND rc2.value = 'Reject' LIMIT 1) as is_disabled
         FROM radcheck rc
         LEFT JOIN radusergroup rug ON rc.username = rug.username
@@ -326,23 +347,26 @@ def user_list(request):
         # User sees:
         # a) Users who have ever connected to their allowed routers (radacct)
         # b) Users they personally interacted with (AdminActivityLog)
+        # c) Users explicitly assigned to their routers (UserNasAssignment)
         
-        # Subquery for Usage
         if not allowed_routers:
             usage_condition = "1=0" # No routers allowed -> No usage visibility
+            assignment_condition = "1=0"
         else:
             # Safe parameter injection for IN clause
             placeholders = ','.join(['%s'] * len(allowed_routers))
             usage_condition = f"rc.username IN (SELECT DISTINCT username FROM radacct WHERE nasipaddress IN ({placeholders}))"
+            assignment_condition = f"rc.username IN (SELECT username FROM user_nas_assignment WHERE nasipaddress IN ({placeholders}))"
         
         # Subquery for Admin Actions (Created/Approved by me)
         admin_condition = "rc.username IN (SELECT target FROM admin_activity_logs WHERE admin_user = %s)"
         
-        sql += f" AND ({usage_condition} OR {admin_condition})"
+        sql += f" AND ({usage_condition} OR {assignment_condition} OR {admin_condition})"
         
         # Append params in order:
         if allowed_routers:
             params.extend(allowed_routers)
+            params.extend(allowed_routers) # For assignment
         params.append(request.user.username)
 
     sql += " ORDER BY rc.id DESC"
@@ -706,6 +730,15 @@ def manage_vouchers(request):
                             details=f"Generated voucher for group {groupname}"
                         )
                         
+                        # Bind user to the admin's allowed NAS IPs
+                        allowed_routers = get_allowed_routers(request.user)
+                        if allowed_routers:
+                            for router_ip in allowed_routers:
+                                UserNasAssignment.objects.get_or_create(
+                                    username=username, 
+                                    nasipaddress=router_ip
+                                )
+                        
                         created_vouchers.append({'user': username, 'pass': password})
                         break # Success, move to next voucher
                         
@@ -792,6 +825,15 @@ def user_create(request):
         if form.is_valid():
             user_instance = form.save()
             
+            # Bind user to the admin's allowed NAS IPs
+            allowed_routers = get_allowed_routers(request.user)
+            if allowed_routers:
+                for router_ip in allowed_routers:
+                    UserNasAssignment.objects.get_or_create(
+                        username=user_instance.username, 
+                        nasipaddress=router_ip
+                    )
+            
             # Log creation so the branch admin can see this user in their list
             AdminActivityLog.objects.create(
                 admin_user=request.user.username,
@@ -875,6 +917,15 @@ def user_import(request):
                             details=f"Part of batch import: {excel_file.name}"
                         )
                         
+                        # Bind user to the admin's allowed NAS IPs
+                        allowed_routers = get_allowed_routers(request.user)
+                        if allowed_routers:
+                            for router_ip in allowed_routers:
+                                UserNasAssignment.objects.get_or_create(
+                                    username=username, 
+                                    nasipaddress=router_ip
+                                )
+
                         imported_usernames.append(username)
                         count += 1
                         

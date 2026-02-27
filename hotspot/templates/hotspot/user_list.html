@@ -195,6 +195,12 @@
                                          Self-Reg
                                     </span>
                                 {% endif %}
+                                {% if request.user.is_superuser %}
+                                    <span class="text-info" style="font-size: 0.65rem; font-weight: 600;">
+                                        <i class="fas fa-network-wired me-1"></i>
+                                        {% if user.assigned_routers %}{{ user.assigned_routers }}{% else %}Global{% endif %}
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
                     </td>
