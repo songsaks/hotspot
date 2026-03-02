@@ -96,7 +96,7 @@ DATABASES = {
         'NAME': 'radius_db',
         'USER': 'ninecom',
         'PASSWORD': 'ninecom@1237',
-        'HOST': '76.13.188.152',  # ใส่เลข IP ของ VPS Hostinger
+        'HOST': '127.0.0.1',  #'76.13.188.152',  # ใส่เลข IP ของ VPS Hostinger
         'PORT': '3306',
     }
 }

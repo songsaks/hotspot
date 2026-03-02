@@ -37,7 +37,12 @@ def dashboard(request):
     allowed_routers = get_allowed_routers(request.user)
     
     # Base querysets
-    online_qs = Radacct.objects.filter(acctstoptime__isnull=True)
+    # Only count sessions updated in the last 2 hours as "Online" to avoid stale ghost sessions
+    two_hours_ago = timezone.now() - timedelta(hours=2)
+    online_qs = Radacct.objects.filter(
+        acctstoptime__isnull=True,
+        acctupdatetime__gte=two_hours_ago
+    )
     today_active_qs = Radacct.objects.filter(acctstarttime__gte=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0))
     
     # Apply router filter if not superuser / explicitly set
@@ -453,7 +458,11 @@ def active_sessions(request):
     allowed_routers = get_allowed_routers(request.user)
     selected_router = request.GET.get('router', '').strip()
     
-    qs = Radacct.objects.filter(acctstoptime__isnull=True)
+    two_hours_ago = timezone.now() - timedelta(hours=2)
+    qs = Radacct.objects.filter(
+        acctstoptime__isnull=True,
+        acctupdatetime__gte=two_hours_ago
+    )
     
     # Restrict to user's assigned routers if applicable
     if allowed_routers is not None:
@@ -1322,7 +1331,11 @@ def analytics_dashboard(request):
     allowed_routers = get_allowed_routers(request.user)
 
     # 1. Real-time Active Users
-    active_qs = Radacct.objects.using('default').filter(acctstoptime__isnull=True)
+    two_hours_ago = timezone.now() - timedelta(hours=2)
+    active_qs = Radacct.objects.using('default').filter(
+        acctstoptime__isnull=True,
+        acctupdatetime__gte=two_hours_ago
+    )
     if allowed_routers is not None:
         active_qs = active_qs.filter(nasipaddress__in=allowed_routers)
     active_users_count = active_qs.count()
