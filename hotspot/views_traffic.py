@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from .models import Radacct
+from django.core.cache import cache
+from .models import Radacct, UserRouterAccess
 from .traffic_models import TrafficLog
 from .utils import get_allowed_routers
 from .log_parser import reverse_dns_cached, simplify_domain 
@@ -617,23 +618,25 @@ def traffic_log_list(request):
     allowed_routers = get_allowed_routers(request.user)
     
     # Get distinct routers for dropdown (Cache to avoid scanning millions of rows)
-    from django.core.cache import cache
-    
-    routers_list = cache.get('traffic_routers_list')
-    if routers_list is None:
-        routers_list = list(
+    # Get routers that have logs (already captured)
+    logged_routers = cache.get('traffic_routers_list')
+    if logged_routers is None:
+        logged_routers = list(
             TrafficLog.objects.using('default')
             .exclude(nas_ip__isnull=True)
             .exclude(nas_ip='')
             .values_list('nas_ip', flat=True)
             .distinct()
-            .order_by('nas_ip')
         )
-        cache.set('traffic_routers_list', routers_list, 60 * 60 * 24) # Cache for 24h
+        cache.set('traffic_routers_list', logged_routers, 60 * 60) # Cache for 1h
         
-    routers = routers_list
     if allowed_routers is not None:
-        routers = [r for r in routers_list if r in allowed_routers]
+        # For restricted users, show their allowed routers even if they have no logs yet
+        routers = sorted(list(set(allowed_routers)))
+    else:
+        # For superusers, show a union of routers with logs and routers in access control
+        defined_routers = list(UserRouterAccess.objects.values_list('router_ip', flat=True).distinct())
+        routers = sorted(list(set(logged_routers + defined_routers)))
     
     # Build queryset
     logs_queryset = TrafficLog.objects.using('default').all().order_by('-id')
@@ -745,4 +748,149 @@ def traffic_log_list(request):
 
 
 
-    return response
+@login_required
+def top_websites(request):
+    """
+    Top Websites Summary:
+    Aggregates TrafficLog by domain (parsed from url/method) and counts
+    unique visits within a configurable date range.
+    Filters: start_date, end_date, router, top_n.
+    """
+    import json
+    from django.db.models import Count, Sum
+
+    # --- Params ---
+    start_date_str = request.GET.get('start_date', '').strip()
+    end_date_str   = request.GET.get('end_date', '').strip()
+    selected_router = request.GET.get('router', '').strip()
+    try:
+        top_n = int(request.GET.get('top_n', 20))
+        top_n = max(5, min(top_n, 100))
+    except ValueError:
+        top_n = 20
+
+    # Default: last 7 days if nothing provided
+    now = datetime.now()  # USE_TZ=False → use naive datetime throughout
+    if not start_date_str and not end_date_str:
+        default_start = now - timedelta(days=7)
+        start_date_str = default_start.strftime('%Y-%m-%d')
+        end_date_str   = now.strftime('%Y-%m-%d')
+
+    # --- Access Control ---
+    allowed_routers = get_allowed_routers(request.user)
+
+    # --- Distinct routers for dropdown ---
+    logged_routers = cache.get('traffic_routers_list')
+    if logged_routers is None:
+        logged_routers = list(
+            TrafficLog.objects.using('default')
+            .exclude(nas_ip__isnull=True).exclude(nas_ip='')
+            .values_list('nas_ip', flat=True).distinct()
+        )
+        cache.set('traffic_routers_list', logged_routers, 3600)
+    if allowed_routers is not None:
+        routers = sorted(list(set(allowed_routers)))
+    else:
+        defined_routers = list(UserRouterAccess.objects.values_list('router_ip', flat=True).distinct())
+        routers = sorted(list(set(logged_routers + defined_routers)))
+
+    # --- Build base queryset ---
+    qs = TrafficLog.objects.using('default').all()
+
+    if allowed_routers is not None:
+        qs = qs.filter(nas_ip__in=allowed_routers)
+
+    if selected_router:
+        if allowed_routers is not None and selected_router not in allowed_routers:
+            qs = qs.none()
+        else:
+            qs = qs.filter(nas_ip=selected_router)
+
+    # --- Date filtering (NAIVE datetimes only — project uses USE_TZ=False) ---
+    try:
+        if start_date_str:
+            start_dt = datetime.strptime(start_date_str[:10], '%Y-%m-%d')
+            qs = qs.filter(log_time__gte=start_dt)
+
+        if end_date_str:
+            end_dt = datetime.strptime(end_date_str[:10], '%Y-%m-%d')
+            end_dt = end_dt.replace(hour=23, minute=59, second=59)
+            qs = qs.filter(log_time__lte=end_dt)
+    except Exception as e:
+        print(f"[top_websites] date parse error: {e}")
+
+    # --- Stream & aggregate in Python (parse domain per row) ---
+    # Fetch only url+method columns, limit for performance
+    MAX_ROWS = 200_000
+    rows = qs.values('url', 'method', 'bytes_sent', 'bytes_received')[:MAX_ROWS]
+
+    domain_stats = {}   # { domain: { 'count': int, 'bytes': int } }
+    total_requests = 0
+
+    for row in rows:
+        parsed = parse_log_entry(row['url'], row['method'])
+        domain = parsed.get('domain') or ''
+        domain = domain.strip().lower()
+
+        # Skip empty, raw IPs, and internal-ish non-domains
+        if not domain:
+            continue
+        if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', domain):
+            continue
+        # Strip www.
+        if domain.startswith('www.'):
+            domain = domain[4:]
+
+        total_requests += 1
+        if domain not in domain_stats:
+            domain_stats[domain] = {'count': 0, 'bytes': 0}
+        domain_stats[domain]['count'] += 1
+        domain_stats[domain]['bytes'] += (row.get('bytes_sent') or 0) + (row.get('bytes_received') or 0)
+
+    # --- Sort & slice ---
+    sorted_domains = sorted(domain_stats.items(), key=lambda x: x[1]['count'], reverse=True)[:top_n]
+
+    # --- Build chart data ---
+    labels      = [d[0] for d in sorted_domains]
+    visit_counts = [d[1]['count'] for d in sorted_domains]
+    bytes_mb    = [round(d[1]['bytes'] / (1024 * 1024), 2) for d in sorted_domains]
+
+    # Pie chart: top 8 + Others
+    pie_labels = labels[:8]
+    pie_data   = visit_counts[:8]
+    others_sum = sum(visit_counts[8:])
+    if others_sum:
+        pie_labels.append('Others')
+        pie_data.append(others_sum)
+
+    # --- Build table rows ---
+    table_rows = []
+    total_count = sum(visit_counts) or 1
+    for rank, (domain, stats) in enumerate(sorted_domains, 1):
+        pct = round(stats['count'] / total_count * 100, 1)
+        mb  = round(stats['bytes'] / (1024 * 1024), 2)
+        table_rows.append({
+            'rank': rank,
+            'domain': domain,
+            'count': stats['count'],
+            'pct': pct,
+            'mb': mb,
+        })
+
+    return render(request, 'hotspot/top_websites.html', {
+        'table_rows': table_rows,
+        'total_requests': total_requests,
+        'unique_domains': len(domain_stats),
+        'routers': routers,
+        'selected_router': selected_router,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'top_n': top_n,
+        # JSON for charts
+        'chart_labels':      json.dumps(labels),
+        'chart_counts':      json.dumps(visit_counts),
+        'chart_bytes':       json.dumps(bytes_mb),
+        'pie_labels':        json.dumps(pie_labels),
+        'pie_data':          json.dumps(pie_data),
+    })
+

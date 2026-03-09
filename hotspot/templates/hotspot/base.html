@@ -531,6 +531,9 @@
             <a href="{% url 'traffic_log_list' %}" class="nav-link {% if request.resolver_match.url_name == 'traffic_log_list' %}active{% endif %}">
                 <i class="fas fa-stream"></i> Traffic Logs
             </a>
+            <a href="{% url 'top_websites' %}" class="nav-link {% if request.resolver_match.url_name == 'top_websites' %}active{% endif %}">
+                <i class="fas fa-globe"></i> Top Websites
+            </a>
             <a href="{% url 'admin_logs' %}" class="nav-link {% if 'logs' in request.path and 'traffic' not in request.path %}active{% endif %}">
                 <i class="fas fa-history"></i> Activity Logs
             </a>
