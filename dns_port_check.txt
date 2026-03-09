@@ -1,0 +1,6 @@
+usage: manage.py shell [-h] [--no-startup] [--no-imports]
+                       [-i {ipython,bpython,python}] [-c COMMAND] [--version]
+                       [-v {0,1,2,3}] [--settings SETTINGS]
+                       [--pythonpath PYTHONPATH] [--traceback] [--no-color]
+                       [--force-color]
+manage.py shell: error: unrecognized arguments: :53\).count()}'); [print(f'[{l.log_time}] {l.url[:150]}') for l in logs]

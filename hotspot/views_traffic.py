@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.core.cache import cache
 from .models import Radacct, UserRouterAccess
-from .traffic_models import TrafficLog
+from .traffic_models import TrafficLog, DailyWebsiteStats
 from .utils import get_allowed_routers
 from .log_parser import reverse_dns_cached, simplify_domain 
 import re
@@ -66,6 +66,17 @@ def parse_log_entry(url, method):
                  if ip_match: client_ip = ip_match.group(1)
         except:
              pass
+    elif 'query:' in url_str:
+        # Format: "query: #1177260262 input.frontrics.site 52.74.50.179"
+        try:
+            parts = url_str.split()
+            if len(parts) >= 4:
+                domain = parts[2].rstrip('.')
+                dst_ip = parts[3]
+                log_type = 'DNS Query'
+                protocol = 'DNS'
+        except:
+            pass
 
     # 2. Firewall Forward pattern (IP:PORT->IP:PORT)
     fw_match = re.search(r'([\d\.]+):(\d+)->([\d\.]+):(\d+)', combined)
@@ -794,7 +805,7 @@ def top_websites(request):
         defined_routers = list(UserRouterAccess.objects.values_list('router_ip', flat=True).distinct())
         routers = sorted(list(set(logged_routers + defined_routers)))
 
-    # --- Build base queryset ---
+    # --- Build base queryset (ALL logs, not just DNS) ---
     qs = TrafficLog.objects.using('default').all()
 
     if allowed_routers is not None:
@@ -819,43 +830,205 @@ def top_websites(request):
     except Exception as e:
         print(f"[top_websites] date parse error: {e}")
 
-    # --- Stream & aggregate in Python (parse domain per row) ---
-    # Fetch only url+method columns, limit for performance
-    MAX_ROWS = 200_000
-    rows = qs.values('url', 'method', 'bytes_sent', 'bytes_received')[:MAX_ROWS]
+    # --- Mapping: known CDN/technical domains → human-readable service names ---
+    DOMAIN_MAP = {
+        # Google
+        '1e100.net': 'google.com',
+        'googleusercontent.com': 'google.com',
+        'googleapis.com': 'google.com',
+        'gstatic.com': 'google.com',
+        'google.co.th': 'google.com',
+        'google.com.sg': 'google.com',
+        # YouTube
+        'googlevideo.com': 'youtube.com',
+        'ytimg.com': 'youtube.com',
+        'youtube-nocookie.com': 'youtube.com',
+        'youtu.be': 'youtube.com',
+        'yt3.ggpht.com': 'youtube.com',
+        # Facebook / Meta
+        'fbcdn.net': 'facebook.com',
+        'fbsbx.com': 'facebook.com',
+        'facebook.net': 'facebook.com',
+        'fb.com': 'facebook.com',
+        'fb.gg': 'facebook.com',
+        'instagram.com': 'instagram.com',
+        'cdninstagram.com': 'instagram.com',
+        # TikTok
+        'tiktokcdn.com': 'tiktok.com',
+        'tiktokv.com': 'tiktok.com',
+        'byteoversea.com': 'tiktok.com',
+        'musical.ly': 'tiktok.com',
+        'ibytedtos.com': 'tiktok.com',
+        'tiktokcdn-us.com': 'tiktok.com',
+        # LINE
+        'line-scdn.net': 'line.me',
+        'line-apps.com': 'line.me',
+        'line.naver.jp': 'line.me',
+        'linecorp.com': 'line.me',
+        # Microsoft
+        'microsoft.com': 'microsoft.com',
+        'msedge.net': 'microsoft.com',
+        'msn.com': 'microsoft.com',
+        'live.com': 'microsoft.com',
+        'office.com': 'microsoft.com',
+        'office365.com': 'microsoft.com',
+        'microsoftonline.com': 'microsoft.com',
+        'windows.net': 'microsoft.com',
+        'msdxcdn.microsoft.com': 'microsoft.com',
+        # Apple
+        'apple.com': 'apple.com',
+        'icloud.com': 'apple.com',
+        'mzstatic.com': 'apple.com',
+        'apple-dns.net': 'apple.com',
+        # Twitter/X
+        'twimg.com': 'x.com',
+        'twitter.com': 'x.com',
+        't.co': 'x.com',
+        # Netflix
+        'nflxvideo.net': 'netflix.com',
+        'nflximg.net': 'netflix.com',
+        'nflxso.net': 'netflix.com',
+        'nflxext.com': 'netflix.com',
+        # Spotify
+        'scdn.co': 'spotify.com',
+        'spotifycdn.com': 'spotify.com',
+        # Amazon / AWS
+        'amazonaws.com': 'amazonaws.com',
+        'cloudfront.net': 'cloudfront.net',
+        # Cloudflare
+        'cloudflare.com': 'cloudflare.com',
+        'cloudflare-dns.com': 'cloudflare.com',
+        # Akamai
+        'akamaized.net': 'akamai.net',
+        'akamai.net': 'akamai.net',
+        'akamaitechnologies.com': 'akamai.net',
+        'akamaihd.net': 'akamai.net',
+        # Discord
+        'discord.gg': 'discord.com',
+        'discordapp.com': 'discord.com',
+        # Lazada / Shopee
+        'lazada.co.th': 'lazada.co.th',
+        'shopee.co.th': 'shopee.co.th',
+    }
 
-    domain_stats = {}   # { domain: { 'count': int, 'bytes': int } }
-    total_requests = 0
+    def map_domain(raw_domain):
+        """Map a technical CDN domain to a recognizable service name."""
+        if not raw_domain:
+            return raw_domain
+        d = raw_domain.lower().strip()
+        if d.startswith('www.'):
+            d = d[4:]
+        # Direct match
+        if d in DOMAIN_MAP:
+            return DOMAIN_MAP[d]
+        # Check if any known suffix matches
+        for tech, human in DOMAIN_MAP.items():
+            if d.endswith('.' + tech) or d == tech:
+                return human
+        return d
 
-    for row in rows:
-        parsed = parse_log_entry(row['url'], row['method'])
-        domain = parsed.get('domain') or ''
-        domain = domain.strip().lower()
+    # --- Strategy Selector: Today vs Historical ---
+    # Sampling for today (live data), Aggregated table for historical
+    today = timezone.now().date()
+    start_dt_obj = None
+    end_dt_obj = None
+    try:
+        if start_date_str: start_dt_obj = datetime.strptime(start_date_str[:10], '%Y-%m-%d').date()
+        if end_date_str: end_dt_obj = datetime.strptime(end_date_str[:10], '%Y-%m-%d').date()
+    except: pass
 
-        # Skip empty, raw IPs, and internal-ish non-domains
-        if not domain:
-            continue
-        if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', domain):
-            continue
-        # Strip www.
-        if domain.startswith('www.'):
-            domain = domain[4:]
+    is_historical = False
+    if start_dt_obj and start_dt_obj < today:
+        is_historical = True
+        
+    domain_stats = {} # Final combined stats
+    total_processed_requests = 0
 
-        total_requests += 1
-        if domain not in domain_stats:
-            domain_stats[domain] = {'count': 0, 'bytes': 0}
-        domain_stats[domain]['count'] += 1
-        domain_stats[domain]['bytes'] += (row.get('bytes_sent') or 0) + (row.get('bytes_received') or 0)
+    # 1. HISTORICAL DATA (from DailyWebsiteStats)
+    if is_historical:
+        # Build queryset for stats table
+        stats_qs = DailyWebsiteStats.objects.all()
+        if start_dt_obj: stats_qs = stats_qs.filter(date__gte=start_dt_obj)
+        if end_dt_obj:   stats_qs = stats_qs.filter(date__lte=end_dt_obj)
+        if end_dt_obj and end_dt_obj >= today: stats_qs = stats_qs.filter(date__lt=today) # Exclude today from stats table
 
-    # --- Sort & slice ---
+        if allowed_routers is not None: stats_qs = stats_qs.filter(nas_ip__in=allowed_routers)
+        if selected_router: stats_qs = stats_qs.filter(nas_ip=selected_router)
+
+        # Aggregate from table
+        # Aggregate from table
+        from django.db.models import Sum
+        db_stats = stats_qs.values('domain').annotate(
+            visits=Sum('visit_count'),
+            users=Sum('unique_users')
+        ).order_by('-visits')[:top_n * 2]
+
+        for s in db_stats:
+            d = s['domain']
+            if d not in domain_stats: domain_stats[d] = {'count': 0, 'users': 0}
+            domain_stats[d]['count'] += s['visits']
+            domain_stats[d]['users'] += s['users']
+            total_processed_requests += s['visits']
+
+    # 2. TODAY'S DATA / LIVE SAMPLING (from TrafficLog)
+    is_live_needed = (not end_dt_obj or end_dt_obj >= today)
+    if is_live_needed:
+        live_qs = qs
+        if start_dt_obj and start_dt_obj < today:
+            live_qs = live_qs.filter(log_time__gte=datetime.combine(today, time.min))
+        
+        MAX_SAMPLE = 100_000
+        rows = list(live_qs.values('url', 'method', 'destination_ip', 'source_ip')[:MAX_SAMPLE])
+        
+        raw_stats = {}
+        for row in rows:
+            parsed = parse_log_entry(row['url'], row['method'])
+            domain = (parsed.get('domain') or '').strip().lower()
+            dst_ip = (parsed.get('dst_ip') or row.get('destination_ip', '')).strip()
+            key = domain or dst_ip
+            if not key or key == '-': continue
+            if key not in raw_stats: raw_stats[key] = {'count': 0, 'users': set(), 'is_ip': not domain and re.match(r'^\d{1,3}(\.\d{1,3}){3}$', key)}
+            raw_stats[key]['count'] += 1
+            raw_stats[key]['users'].add(row.get('source_ip'))
+
+        # Resolve live IPs
+        sorted_raw = sorted(raw_stats.items(), key=lambda x: x[1]['count'], reverse=True)
+        public_ips = [k for k,v in sorted_raw if v['is_ip'] and len(k)>7][:50]
+        
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        ip_to_domain = {}
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(reverse_dns_cached, ip): ip for ip in public_ips}
+            for future in as_completed(futures):
+                try:
+                    ip = futures[future]
+                    hostname = future.result()
+                    if hostname: ip_to_domain[ip] = map_domain(simplify_domain(hostname))
+                except: pass
+
+        # Merge live into domain_stats
+        for key, stats in sorted_raw:
+            final_key = ip_to_domain.get(key, key)
+            if re.match(r'^\d{1,3}(\.\d{1,3}){3}$', final_key): continue # Skip raw IPs
+            mapped = map_domain(final_key)
+            if mapped not in domain_stats: domain_stats[mapped] = {'count': 0, 'users': 0}
+            domain_stats[mapped]['count'] += stats['count']
+            
+            if isinstance(stats['users'], set):
+                domain_stats[mapped]['users'] += len(stats['users'])
+            else:
+                domain_stats[mapped]['users'] += stats['users']
+            
+            total_processed_requests += stats['count']
+
+    # --- Sort & Build Return Slice ---
     sorted_domains = sorted(domain_stats.items(), key=lambda x: x[1]['count'], reverse=True)[:top_n]
-
-    # --- Build chart data ---
+    total_requests = total_processed_requests
+    
     labels      = [d[0] for d in sorted_domains]
     visit_counts = [d[1]['count'] for d in sorted_domains]
-    bytes_mb    = [round(d[1]['bytes'] / (1024 * 1024), 2) for d in sorted_domains]
-
-    # Pie chart: top 8 + Others
+    user_counts  = [d[1]['users'] for d in sorted_domains]
+    
     pie_labels = labels[:8]
     pie_data   = visit_counts[:8]
     others_sum = sum(visit_counts[8:])
@@ -863,18 +1036,17 @@ def top_websites(request):
         pie_labels.append('Others')
         pie_data.append(others_sum)
 
-    # --- Build table rows ---
+    # Table rows
     table_rows = []
-    total_count = sum(visit_counts) or 1
+    total_count_sum = sum(visit_counts) or 1
     for rank, (domain, stats) in enumerate(sorted_domains, 1):
-        pct = round(stats['count'] / total_count * 100, 1)
-        mb  = round(stats['bytes'] / (1024 * 1024), 2)
+        pct = round(stats['count'] / total_count_sum * 100, 1) if total_count_sum > 0 else 0
         table_rows.append({
             'rank': rank,
             'domain': domain,
             'count': stats['count'],
+            'users': stats['users'],
             'pct': pct,
-            'mb': mb,
         })
 
     return render(request, 'hotspot/top_websites.html', {
@@ -889,8 +1061,55 @@ def top_websites(request):
         # JSON for charts
         'chart_labels':      json.dumps(labels),
         'chart_counts':      json.dumps(visit_counts),
-        'chart_bytes':       json.dumps(bytes_mb),
+        'chart_users':       json.dumps(user_counts),
         'pie_labels':        json.dumps(pie_labels),
         'pie_data':          json.dumps(pie_data),
     })
+
+@login_required
+def sync_daily_stats(request):
+    """
+    Manually trigger aggregation for missing days.
+    Checks what's in TrafficLog vs DailyWebsiteStats and fills the gaps up to yesterday.
+    """
+    from datetime import time, timedelta
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
+    
+    # 1. Find the date range available in TrafficLog
+    # (Since logs are cleared every 2 days, we only care about what's actually there)
+    first_log = TrafficLog.objects.order_by('log_time').first()
+    if not first_log:
+        messages.warning(request, "ไม่พบข้อมูล Log ในระบบสำหรับนำมาประมวลผล")
+        return HttpResponse('<script>window.location.href=document.referrer;</script>')
+    
+    log_start_date = first_log.log_time.date()
+    
+    # We aggregate up to yesterday (we don't aggregate 'today' until it's over)
+    target_dates = []
+    curr = log_start_date
+    while curr <= yesterday:
+        # Check if already aggregated
+        exists = DailyWebsiteStats.objects.filter(date=curr).exists()
+        if not exists:
+            target_dates.append(curr)
+        curr += timedelta(days=1)
+        
+    if not target_dates:
+        messages.info(request, f"ข้อมูลสถิติจนถึงวันที่ {yesterday} ถูกประมวลผลเรียบร้อยแล้ว ไม่ต้องทำอะไรเพิ่มเติม")
+        return HttpResponse('<script>window.location.href=document.referrer;</script>')
+
+    # 2. Re-use the logic from management command
+    from django.core.management import call_command
+    processed_count = 0
+    for d in target_dates:
+        try:
+            date_str = d.strftime('%Y-%m-%d')
+            call_command('aggregate_daily_stats', date=date_str)
+            processed_count += 1
+        except Exception as e:
+            print(f"Error aggregating {d}: {e}")
+
+    messages.success(request, f"ประมวลผลข้อมูลย้อนหลังสำเร็จทั้งหมด {processed_count} วัน (จนถึงวันที่ {yesterday})")
+    return HttpResponse('<script>window.location.href=document.referrer;</script>')
 

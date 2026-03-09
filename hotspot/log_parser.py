@@ -38,23 +38,36 @@ PORT_NAMES = {
     '8443': 'HTTPS-Alt',
 }
 
-# Simple DNS cache (in-memory, per process)
-_dns_cache = {}
-
+# DNS cache (in-memory, per process) and shared cache (Django Cache)
+_local_dns_cache = {}
 
 def reverse_dns_cached(ip):
-    """Reverse DNS lookup with in-memory cache."""
-    if ip in _dns_cache:
-        return _dns_cache[ip]
+    """Reverse DNS lookup with Django cache and in-memory fallback."""
+    if not ip or not isinstance(ip, str): return None
+    if ip in _local_dns_cache:
+        return _local_dns_cache[ip]
     
+    from django.core.cache import cache
+    cache_key = f"rdns_{ip}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        _local_dns_cache[ip] = cached if cached != '__NONE__' else None
+        return _local_dns_cache[ip]
+    
+    old_timeout = socket.getdefaulttimeout()
     try:
+        socket.setdefaulttimeout(1)  # 1 second timeout per lookup
         hostname, _, _ = socket.gethostbyaddr(ip)
         # Simplify: extract main domain
-        _dns_cache[ip] = hostname
+        _local_dns_cache[ip] = hostname
+        cache.set(cache_key, hostname, 86400) # Cache for 24h
         return hostname
-    except (socket.herror, socket.gaierror, OSError):
-        _dns_cache[ip] = None
+    except (socket.herror, socket.gaierror, OSError, socket.timeout):
+        _local_dns_cache[ip] = None
+        cache.set(cache_key, '__NONE__', 3600) # Cache negative lookup for 1h
         return None
+    finally:
+        socket.setdefaulttimeout(old_timeout)
 
 
 def simplify_domain(hostname):

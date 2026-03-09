@@ -1,0 +1,92 @@
+Checking logs since: 2026-02-23 15:47:16.526251
+Logs containing ':53' (potentially DNS): 806262
+  - [2026-03-09 15:47:29]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.117:53318->47.236.1.18:80, len 60
+  - [2026-03-09 15:47:29]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.117:53318->47.236.1.18:80, len 60
+  - [2026-03-09 15:47:28]  Chula forward: in:vlan60-Ruijie-MG out:sfp-sfpplus2-Meraki, src-mac 32:43:20:9d:b9:6e, proto TCP (SYN), 10.60.0.69:53580->52.220.229.102:443, len 64
+  - [2026-03-09 15:47:28]  Chula forward: in:vlan60-Ruijie-MG out:sfp-sfpplus2-Meraki, src-mac 32:43:20:9d:b9:6e, proto TCP (SYN), 10.60.0.69:53580->52.220.229.102:443, len 64
+  - [2026-03-09 15:47:27]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.10.72:53623->142.250.204.101:443, len 52
+Pattern 'got query from': 0
+Pattern 'got answer from': 0
+Pattern 'from': 6
+  - [2026-03-09 15:28:23] URL:  from 10.0.3.48: #3704592 inputsuggestions.msdxcdn.microsoft.com. A
+    Parsed Domain: inputsuggestions.msdxcdn.microsoft.com
+  - [2026-03-09 15:28:12] URL:  from 10.0.3.48: #3704192 inputsuggestions.msdxcdn.microsoft.com. A
+    Parsed Domain: inputsuggestions.msdxcdn.microsoft.com
+  - [2026-03-09 14:49:30] URL:  from 10.0.2.66: #3609454 inputsuggestions.msdxcdn.microsoft.com. A
+    Parsed Domain: inputsuggestions.msdxcdn.microsoft.com
+  - [2026-03-09 14:33:26] URL:  from 10.0.3.48: #3570366 inputsuggestions.msdxcdn.microsoft.com. A
+    Parsed Domain: inputsuggestions.msdxcdn.microsoft.com
+  - [2026-03-09 14:33:26] URL:  from 10.0.3.48: #3570372 inputsuggestions.msdxcdn.microsoft.com. A
+    Parsed Domain: inputsuggestions.msdxcdn.microsoft.com
+
+--- Top Websites Aggregation Simulation (Last 14 Days) ---
+Total candidate logs: 10843806
+Found a record with domain: [2026-03-09 15:28:23] URL:  from 10.0.3.48: #3704592 inputsuggestions.msdxcdn.microsoft.com. A | Domain: inputsuggestions.msdxcdn.microsoft.com
+Traceback (most recent call last):
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\mysql\base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\MySQLdb\cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\MySQLdb\cursors.py", line 330, in _query
+    db.query(q)
+    ~~~~~~~~^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\MySQLdb\connections.py", line 286, in query
+    _mysql.connection.query(self, query)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+MySQLdb.OperationalError: (2013, 'Lost connection to server during query')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\DjangoProjects\ninecom_hotspot\diagnose_dns.py", line 62, in <module>
+    for l in recent_subset:
+             ^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+        chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+    )
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\backends\mysql\base.py", line 76, in execute
+    return self.cursor.execute(query, args)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\MySQLdb\cursors.py", line 179, in execute
+    res = self._query(mogrified_query)
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\MySQLdb\cursors.py", line 330, in _query
+    db.query(q)
+    ~~~~~~~~^^^
+  File "C:\Users\asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\MySQLdb\connections.py", line 286, in query
+    _mysql.connection.query(self, query)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+django.db.utils.OperationalError: (2013, 'Lost connection to server during query')

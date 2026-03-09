@@ -1,0 +1,52 @@
+16 objects imported automatically (use -v 2 for details).
+
+[2026-03-09 15:42:06] URL:  forward: in:vlan101-Hotspot-B1 out:ether2-Wan2-TOT, src-mac e0:b9:a5:2d:d3:b8, proto UDP, 192.168.101.12:55224->49.231.120.131:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan101-Hotspot-B1 out:ether2-Wan2-TOT, src-mac e0:b9:a5:2d:d3:b8, proto UDP, 192.168.101.12:55224->49.231.120.131:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan101-Hotspot-B1 out:ether2-Wan2-TOT, src-mac e0:b9:a5:2d:d3:b8, proto UDP, 192.168.101.12:55224->49.231.120.131:443, NAT (192.168.101. | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan101-Hotspot-B1 out:ether2-Wan2-TOT, src-mac e0:b9:a5:2d:d3:b8, proto UDP, 192.168.101.12:55224->49.231.120.131:443, NAT (192.168.101. | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (ACK,PSH), 10.202.2.209:42866->74.125.68.156:443, len 76 | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (ACK,PSH), 10.202.2.209:42866->74.125.68.156:443, len 76 | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (ACK,FIN), 10.202.2.209:42866->74.125.68.156:443, NAT (10.202.2.209: | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (ACK,FIN), 10.202.2.209:42866->74.125.68.156:443, NAT (10.202.2.209: | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.225.0.173:61541->17.253.87.196:443, len 64 | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.225.0.173:61541->17.253.87.196:443, len 64 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.11.3.28:5840->163.70.149.15:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.6.0.58:63324->172.66.146.164:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 04:7d:7b:ad:72:92, proto TCP (SYN), 192.168.22.198:52142->150.171.28.12:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 04:7d:7b:ad:72:92, proto TCP (SYN), 192.168.22.198:52142->150.171.28.12:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto TCP (SYN), 192.168.22.87:49291->104.21.95.249:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto TCP (SYN), 192.168.22.87:49291->104.21.95.249:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, NAT (192.168.1.114:5 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, NAT (192.168.1.114:5 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, NAT (192.168.1.114:5 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, NAT (192.168.1.114:5 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41.3:443, NAT (192.168.1.114:5 | METHOD: None
+[2026-03-09 15:42:06] URL:  message repeated 3 times: [ TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:55111->172.64.41 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.12.2.28:58870->104.16.80.73:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, NAT (192.168.1.114 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, NAT (192.168.1.114 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, NAT (192.168.1.114 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, NAT (192.168.1.114 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, NAT (192.168.1.114 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto UDP, 192.168.1.114:60606->142.251.12.95:443, NAT (192.168.1.114 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto UDP, 10.31.1.9:51244->163.70.149.15:443, len 1260 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto UDP, 10.31.1.9:51244->163.70.149.15:443, len 1260 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.12.2.28:58871->104.16.80.73:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto UDP, 10.222.1.200:63717->61.19.12.18:443, len 1348 | METHOD: None
+[2026-03-09 15:42:06] URL:  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto UDP, 10.222.1.200:63717->61.19.12.18:443, len 1348 | METHOD: None
+[2026-03-09 15:42:06] URL:  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.6.0.193:56059->172.66.146.164:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan60-Hotspot-Art out:ether1-Wan1-AIS, src-mac 10:82:3d:59:85:18, proto TCP (SYN), 192.168.60.196:56615->47.245.114.175:80, len 60 | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan60-Hotspot-Art out:ether1-Wan1-AIS, src-mac 10:82:3d:59:85:18, proto TCP (SYN), 192.168.60.196:56615->47.245.114.175:80, len 60 | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan10-Teacher out:pppoe-out1-TOT1, src-mac e0:d4:64:91:46:00, proto TCP (SYN), 192.168.110.84:60148->79.133.171.22:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  forward: in:vlan10-Teacher out:pppoe-out1-TOT1, src-mac e0:d4:64:91:46:00, proto TCP (SYN), 192.168.110.84:60148->79.133.171.22:443, len 52 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, len 1278 | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, NAT (192.168.1.126: | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, NAT (192.168.1.126: | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, NAT (192.168.1.126: | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, NAT (192.168.1.126: | METHOD: None
+[2026-03-09 15:42:06] URL:  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac d4:5d:64:7f:f8:01, proto UDP, 192.168.1.126:57825->162.159.61.3:443, NAT (192.168.1.126: | METHOD: None

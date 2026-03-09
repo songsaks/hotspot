@@ -1,0 +1,16 @@
+[2026-03-09 16:21:55]  from 10.31.1.25: #1177260261 input.frontrics.site. UNKNOWN (65)
+[2026-03-09 16:21:55]  from 10.31.1.25: #1177260262 input.frontrics.site. A
+[2026-03-09 16:21:55]  query: #1177260262 input.frontrics.site 52.74.50.179
+[2026-03-09 16:16:26]  from 10.31.1.25: #1177253471 input.frontrics.site. UNKNOWN (65)
+[2026-03-09 16:16:26]  from 10.31.1.25: #1177253472 input.frontrics.site. A
+[2026-03-09 16:16:26]  query: #1177253472 input.frontrics.site 3.1.106.110
+[2026-03-09 16:07:40]  from 10.6.0.187: #1177241577 input.frontrics.site. A
+[2026-03-09 16:07:40]  query: #1177241577 input.frontrics.site 52.74.50.179
+[2026-03-09 15:59:37]  from 10.6.0.187: #1177230416 input.frontrics.site. A
+[2026-03-09 15:59:37]  query: #1177230416 input.frontrics.site 3.1.106.110
+[2026-03-09 15:28:23]  from 10.0.3.48: #3704592 inputsuggestions.msdxcdn.microsoft.com. A
+[2026-03-09 15:28:12]  from 10.0.3.48: #3704192 inputsuggestions.msdxcdn.microsoft.com. A
+[2026-03-09 14:49:30]  from 10.0.2.66: #3609454 inputsuggestions.msdxcdn.microsoft.com. A
+[2026-03-09 14:33:26]  from 10.0.3.48: #3570366 inputsuggestions.msdxcdn.microsoft.com. A
+[2026-03-09 14:33:26]  from 10.0.3.48: #3570372 inputsuggestions.msdxcdn.microsoft.com. A
+[2026-03-09 14:33:15]  from 10.0.3.48: #3569962 inputsuggestions.msdxcdn.microsoft.com. A

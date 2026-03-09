@@ -1,0 +1,100 @@
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out5-TOT-5, src-mac 78:b2:13:d4:5a:88, proto UDP, 192.168.110.195:57245->163.70.149.15:443, len 1228
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out5-TOT-5, src-mac 78:b2:13:d4:5a:88, proto UDP, 192.168.110.195:57245->163.70.149.15:443, len 1228
+[2026-03-09 16:15:23]  forward: in:vlan150-Hotspot-Teacher-B1 out:pppoe-out5-TOT-5, src-mac 4e:ba:c7:90:4a:28, proto TCP (SYN), 192.168.151.15:57062->142.250.4.94:443, len 60
+[2026-03-09 16:15:23]  forward: in:vlan150-Hotspot-Teacher-B1 out:pppoe-out5-TOT-5, src-mac 4e:ba:c7:90:4a:28, proto TCP (SYN), 192.168.151.15:57062->142.250.4.94:443, len 60
+[2026-03-09 16:15:23]  forward: in:vlan50-Hotspot-B4 out:ether1-Wan1-AIS, src-mac 54:16:51:a7:b5:0f, proto TCP (SYN), 192.168.50.12:51308->47.236.1.18:80, len 60
+[2026-03-09 16:15:23]  forward: in:vlan50-Hotspot-B4 out:ether1-Wan1-AIS, src-mac 54:16:51:a7:b5:0f, proto TCP (SYN), 192.168.50.12:51308->47.236.1.18:80, len 60
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 60:45:2e:bf:a0:0e, proto TCP (SYN), 192.168.110.144:50602->104.18.125.108:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 60:45:2e:bf:a0:0e, proto TCP (SYN), 192.168.110.144:50602->104.18.125.108:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 60:45:2e:bf:a0:0e, proto TCP (SYN), 192.168.110.144:50603->104.18.125.108:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 60:45:2e:bf:a0:0e, proto TCP (SYN), 192.168.110.144:50603->104.18.125.108:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 60:45:2e:bf:a0:0e, proto TCP (SYN), 192.168.110.144:50604->104.18.125.108:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 60:45:2e:bf:a0:0e, proto TCP (SYN), 192.168.110.144:50604->104.18.125.108:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:pppoe-out4-TOT-4, src-mac a2:8e:ad:06:0e:fa, proto UDP, 192.168.60.214:62257->163.70.148.2:443, len 1280
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:pppoe-out4-TOT-4, src-mac a2:8e:ad:06:0e:fa, proto UDP, 192.168.60.214:62257->163.70.148.2:443, len 1280
+[2026-03-09 16:15:23]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:51644->192.168.130.116:80, NAT (192.168.130.69:51644->192.168.130.1:51644)-
+[2026-03-09 16:15:23]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:37701->192.168.131.152:80, NAT (192.168.130.69:37701->192.168.130.1:37701)-
+[2026-03-09 16:15:23]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:51644->192.168.130.116:80, NAT (192.168.130.69:51644->192.168.130.1:51644)-
+[2026-03-09 16:15:23]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto TCP (SYN), 192.168.22.87:49306->104.21.95.249:443, len 52
+[2026-03-09 16:15:23]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto TCP (SYN), 192.168.22.87:49306->104.21.95.249:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan300-TeacherB3 out:ether1-Wan1-AIS, src-mac a4:97:b1:b4:37:13, proto TCP (SYN), 10.0.3.59:59504->1.0.131.183:80, len 52
+[2026-03-09 16:15:23]  forward: in:vlan300-TeacherB3 out:ether1-Wan1-AIS, src-mac a4:97:b1:b4:37:13, proto TCP (SYN), 10.0.3.59:59504->1.0.131.183:80, len 52
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.204:47992->47.245.114.175:80, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.204:47992->47.245.114.175:80, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.206:54921->172.66.0.227:443, len 64
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.206:54921->172.66.0.227:443, len 64
+[2026-03-09 16:15:23]  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.206:59557->163.70.149.63:443, len 64
+[2026-03-09 16:15:23]  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.206:59558->163.70.149.63:443, len 64
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.126:39803->47.236.1.18:80, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.126:39803->47.236.1.18:80, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.173:53851->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.173:53851->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.14.49:36251->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.14.49:36251->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.177:60486->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.177:60486->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.113:44461->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.113:44461->175.41.148.117:443, len 60
+[2026-03-09 16:15:23]  forward: in:vlan300-TeacherB3 out:ether1-Wan1-AIS, src-mac a4:97:b1:b4:37:13, proto TCP (SYN), 10.0.3.59:59505->40.126.35.20:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan300-TeacherB3 out:ether1-Wan1-AIS, src-mac a4:97:b1:b4:37:13, proto TCP (SYN), 10.0.3.59:59505->40.126.35.20:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out5-TOT-5, src-mac 60:e3:2b:94:fd:63, proto TCP (SYN), 192.168.110.114:14671->23.53.118.102:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out5-TOT-5, src-mac 60:e3:2b:94:fd:63, proto TCP (SYN), 192.168.110.114:14671->23.53.118.102:443, len 52
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:pppoe-out2-TOT-2, src-mac a2:8e:ad:06:0e:fa, proto UDP, 192.168.60.214:63191->163.70.149.15:443, len 1228
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:pppoe-out2-TOT-2, src-mac a2:8e:ad:06:0e:fa, proto UDP, 192.168.60.214:63191->163.70.149.15:443, len 1228
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:ether1-Wan1-AIS, src-mac d4:31:27:94:51:7f, proto TCP (SYN), 192.168.60.39:43801->47.245.114.175:80, len 60
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:ether1-Wan1-AIS, src-mac d4:31:27:94:51:7f, proto TCP (SYN), 192.168.60.39:43801->47.245.114.175:80, len 60
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.200:49920->17.248.224.27:443, len 64
+[2026-03-09 16:15:23]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.200:49920->17.248.224.27:443, len 64
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:pppoe-out2-TOT-2, src-mac a2:8e:ad:06:0e:fa, proto UDP, 192.168.60.214:52685->163.70.149.15:443, len 1280
+[2026-03-09 16:15:23]  forward: in:vlan60-Hotspot-Art out:pppoe-out2-TOT-2, src-mac a2:8e:ad:06:0e:fa, proto UDP, 192.168.60.214:52685->163.70.149.15:443, len 1280
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out5-TOT-5, src-mac 78:b2:13:d4:5a:88, proto UDP, 192.168.110.195:58272->163.70.149.15:443, len 1228
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:pppoe-out5-TOT-5, src-mac 78:b2:13:d4:5a:88, proto UDP, 192.168.110.195:58272->163.70.149.15:443, len 1228
+[2026-03-09 16:15:23]  forward: in:vlan200-TeacherB2 out:ether1-Wan1-AIS, src-mac 3e:0d:56:00:57:7e, proto TCP (SYN), 10.0.2.102:60535->216.239.34.223:443, len 64
+[2026-03-09 16:15:23]  forward: in:vlan200-TeacherB2 out:ether1-Wan1-AIS, src-mac 3e:0d:56:00:57:7e, proto TCP (SYN), 10.0.2.102:60535->216.239.34.223:443, len 64
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:ether2-Wan2-TOT, src-mac e6:c8:cb:cb:62:c6, proto TCP (SYN), 192.168.110.180:65130->17.253.118.202:443, len 64
+[2026-03-09 16:15:23]  forward: in:vlan10-Teacher out:ether2-Wan2-TOT, src-mac e6:c8:cb:cb:62:c6, proto TCP (SYN), 192.168.110.180:65130->17.253.118.202:443, len 64
+[2026-03-09 16:15:23]  forward: in:vlan70-Hotspot-Sport out:ether1-Wan1-AIS, src-mac 54:16:51:a9:f0:e7, proto TCP (SYN), 192.168.70.4:53244->47.245.114.175:80, len 60
+[2026-03-09 16:15:23]  forward: in:vlan70-Hotspot-Sport out:ether1-Wan1-AIS, src-mac 54:16:51:a9:f0:e7, proto TCP (SYN), 192.168.70.4:53244->47.245.114.175:80, len 60
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:ether1-Wan1-AIS, src-mac 9c:2b:a6:97:ef:95, proto TCP (SYN), 192.168.60.198:50610->216.239.38.223:443, len 60
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:ether1-Wan1-AIS, src-mac 9c:2b:a6:97:ef:95, proto TCP (SYN), 192.168.60.198:50610->216.239.38.223:443, len 60
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:ether8-Wan8-TOT, src-mac ba:45:67:a2:4e:38, proto TCP (SYN), 192.168.60.143:38208->141.226.224.32:443, len 60
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:ether8-Wan8-TOT, src-mac ba:45:67:a2:4e:38, proto TCP (SYN), 192.168.60.143:38208->141.226.224.32:443, len 60
+[2026-03-09 16:15:22]  forward: in:vlan10-Teacher out:ether8-Wan8-TOT, src-mac e6:c8:cb:cb:62:c6, proto TCP (SYN), 192.168.110.180:65129->2.17.106.111:80, len 64
+[2026-03-09 16:15:22]  forward: in:vlan10-Teacher out:ether8-Wan8-TOT, src-mac e6:c8:cb:cb:62:c6, proto TCP (SYN), 192.168.110.180:65129->2.17.106.111:80, len 64
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out4-TOT-4, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:55057->142.250.66.130:443, len 1278
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out4-TOT-4, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:55057->142.250.66.130:443, len 1278
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out4-TOT-4, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:55057->142.250.66.130:443, NAT (192.168.60.143:55057->203.172.203.220:55057)->142.250.66.130:
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out4-TOT-4, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:55057->142.250.66.130:443, NAT (192.168.60.143:55057->203.172.203.220:55057)->142.250.66.130:
+[2026-03-09 16:15:22]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:37701->192.168.131.152:80, len 52
+[2026-03-09 16:15:22]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:37701->192.168.131.152:80, len 52
+[2026-03-09 16:15:22]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:51644->192.168.130.116:80, len 52
+[2026-03-09 16:15:22]  forward: in:vlan30-WIFi-Hotsppot-B3 out:vlan30-WIFi-Hotsppot-B3, src-mac 6c:f1:7e:82:71:0d, proto TCP (SYN), 192.168.130.69:51644->192.168.130.116:80, len 52
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.176:39161->47.245.114.175:80, len 60
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.8.176:39161->47.245.114.175:80, len 60
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.12.42:51729->134.65.71.183:443, len 64
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.12.42:51729->134.65.71.183:443, len 64
+[2026-03-09 16:15:22]  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.206:59558->163.70.149.63:443, len 64
+[2026-03-09 16:15:22]  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.206:59557->163.70.149.63:443, len 64
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.12.42:51730->143.92.75.52:443, len 64
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:bonding1, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.12.42:51730->143.92.75.52:443, len 64
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.12.97:57813->17.253.87.200:443, len 64
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.230.12.97:57813->17.253.87.200:443, len 64
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out1-TOT1, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:56176->142.250.66.98:443, len 1278
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out1-TOT1, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:56176->142.250.66.98:443, len 1278
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out1-TOT1, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:56176->142.250.66.98:443, NAT (192.168.60.143:56176->203.172.219.24:56176)->142.250.66.98:443,
+[2026-03-09 16:15:22]  forward: in:vlan60-Hotspot-Art out:pppoe-out1-TOT1, src-mac ba:45:67:a2:4e:38, proto UDP, 192.168.60.143:56176->142.250.66.98:443, NAT (192.168.60.143:56176->203.172.219.24:56176)->142.250.66.98:443,
+[2026-03-09 16:15:22]  forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 04:7d:7b:ad:72:92, proto TCP (ACK,FIN), 192.168.22.198:52081->147.92.191.21:443, len 40
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto TCP (SYN), 192.168.1.114:56397->10.87.118.172:1688, len 52
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether5-Office out:pppoe-out-3BB, src-mac 54:04:a6:a2:1b:70, proto TCP (SYN), 192.168.1.114:56397->10.87.118.172:1688, len 52
+[2026-03-09 16:15:22]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 78:b2:13:d4:5a:88, proto TCP (SYN), 192.168.110.195:51778->49.231.112.18:443, len 64
+[2026-03-09 16:15:22]  forward: in:vlan10-Teacher out:pppoe-out3-TOT-3, src-mac 78:b2:13:d4:5a:88, proto TCP (SYN), 192.168.110.195:51778->49.231.112.18:443, len 64
+[2026-03-09 16:15:22]  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto UDP, 10.230.12.40:43610->163.70.149.15:443, len 1260
+[2026-03-09 16:15:22]  Drop-Game prerouting: in:sfp-sfpp10G out:(unknown 0), src-mac 80:27:6c:4b:d9:7f, proto UDP, 10.230.12.40:43610->163.70.149.15:443, len 1260
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.200:49919->17.248.224.27:443, len 64
+[2026-03-09 16:15:22]  Chula forward: in:sfp-sfpp10G out:sfp-sfpplus2-Meraki, src-mac 80:27:6c:4b:d9:7f, proto TCP (SYN), 10.222.1.200:49919->17.248.224.27:443, len 64
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto UDP, 192.168.22.87:59501->142.250.204.131:443, len 1278
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto UDP, 192.168.22.87:59501->142.250.204.131:443, len 1278
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto UDP, 192.168.22.87:59501->142.250.204.131:443, NAT (192.168.22.87:59501->223.205.60.90:59501)->142.250.204.131:443, 
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto UDP, 192.168.22.87:59501->142.250.204.131:443, NAT (192.168.22.87:59501->223.205.60.90:59501)->142.250.204.131:443, 
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto UDP, 192.168.22.87:59501->142.250.204.131:443, NAT (192.168.22.87:59501->223.205.60.90:59501)->142.250.204.131:443, 
+[2026-03-09 16:15:22]  TRAFFIC forward: in:ether3-LAN out:pppoe-out-3BB, src-mac 70:cf:49:81:81:9d, proto UDP, 192.168.22.87:59501->142.250.204.131:443, NAT (192.168.22.87:59501->223.205.60.90:59501)->142.250.204.131:443, 

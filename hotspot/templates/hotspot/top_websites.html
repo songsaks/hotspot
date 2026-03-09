@@ -260,6 +260,13 @@
             <i class="fas fa-filter me-1"></i> Apply
         </button>
     </div>
+    <div style="align-self:flex-end; margin-left: auto;">
+        <a href="{% url 'sync_daily_stats' %}" class="btn btn-outline-primary btn-sm btn-sync" 
+           style="border-radius: 8px; font-weight: 700; font-size: .8rem; padding: .4rem 1rem; border-color: #6366f1; color: #6366f1;"
+           onclick="this.classList.add('disabled'); this.innerHTML='<i class=\'fas fa-spinner fa-spin me-1\'></i> Processing...';">
+            <i class="fas fa-sync-alt me-1"></i> Sync & Aggregated Data
+        </a>
+    </div>
 </form>
 
 <!-- ── CHARTS ROW ── -->
@@ -303,13 +310,13 @@
 <div class="chart-card mb-3">
     <div class="chart-card-header">
         <div class="icon" style="background:rgba(14,165,233,.1);">
-            <i class="fas fa-database" style="color:#0ea5e9;"></i>
+            <i class="fas fa-users" style="color:#0ea5e9;"></i>
         </div>
-        Data Volume per Domain (MB)
+        Unique Users per Domain
     </div>
     <div class="chart-card-body">
         <div style="height:280px; position:relative;">
-            <canvas id="bytesChart"></canvas>
+            <canvas id="usersChart"></canvas>
         </div>
     </div>
 </div>
@@ -331,7 +338,7 @@
                         <th>Domain</th>
                         <th style="width:120px;">Visits</th>
                         <th style="width:200px;">Share</th>
-                        <th style="width:120px;">Data (MB)</th>
+                        <th style="width:120px;">Unique Users</th>
                         <th style="width:100px;">Traffic Link</th>
                     </tr>
                 </thead>
@@ -367,7 +374,7 @@
                             </div>
                         </td>
                         <td>
-                            <span style="color:#0ea5e9; font-weight:600;">{{ row.mb }} MB</span>
+                            <span style="color:#0ea5e9; font-weight:600;"><i class="fas fa-user-circle me-1"></i> {{ row.users }}</span>
                         </td>
                         <td>
                             <a href="{% url 'traffic_log_list' %}?q={{ row.domain }}&start_date={{ start_date }}&end_date={{ end_date }}{% if selected_router %}&router={{ selected_router }}{% endif %}"
@@ -403,7 +410,7 @@
     // ── Raw data from Django ──
     const chartLabels = JSON.parse('{{ chart_labels|escapejs }}');
     const chartCounts = JSON.parse('{{ chart_counts|escapejs }}');
-    const chartBytes  = JSON.parse('{{ chart_bytes|escapejs }}');
+    const chartUsers  = JSON.parse('{{ chart_users|escapejs }}');
     const pieLabels   = JSON.parse('{{ pie_labels|escapejs }}');
     const pieData     = JSON.parse('{{ pie_data|escapejs }}');
 
@@ -515,14 +522,14 @@
         }
     });
 
-    // ── 3. Bytes Bar Chart ──
-    new Chart(document.getElementById('bytesChart'), {
+    // ── 3. Users Bar Chart ──
+    new Chart(document.getElementById('usersChart'), {
         type: 'bar',
         data: {
             labels: chartLabels,
             datasets: [{
-                label: 'MB',
-                data: chartBytes,
+                label: 'Users',
+                data: chartUsers,
                 backgroundColor: chartLabels.map((_, i) => '#0ea5e9' + (i % 2 === 0 ? 'cc' : '88')),
                 borderColor: '#0ea5e9',
                 borderWidth: 1.5,
@@ -535,7 +542,7 @@
                 legend: { display: false },
                 tooltip: { ...tooltipStyle,
                     callbacks: {
-                        label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} MB`
+                        label: (ctx) => ` ${ctx.parsed.y.toLocaleString()} users`
                     }
                 }
             },
@@ -543,7 +550,7 @@
                 y: {
                     beginAtZero: true,
                     grid: { color: '#f1f5f9', borderDash: [4,4] },
-                    ticks: { font: { size: 11 }, color: '#64748b' }
+                    ticks: { font: { size: 11 }, color: '#64748b', stepSize: 1 }
                 },
                 x: {
                     grid: { display: false },
