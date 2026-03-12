@@ -841,8 +841,10 @@ def top_websites(request):
         # Facebook & Instagram
         'facebook.com': 'facebook.com', 'fbcdn.net': 'facebook.com', 
         'facebook.net': 'facebook.com', 'fbsbx.com': 'facebook.com',
-        'fb.me': 'facebook.com', 'messenger.com': 'facebook.com',
+        'fb.me': 'facebook.com', 'fb.com': 'facebook.com', 'fb.gg': 'facebook.com',
+        'messenger.com': 'facebook.com',
         'instagram.com': 'instagram.com', 'cdninstagram.com': 'instagram.com',
+        'ig.me': 'instagram.com', 'igcdn.com': 'instagram.com',
         # TikTok
         'tiktok.com': 'tiktok.com', 'tiktokcdn.com': 'tiktok.com', 
         'tiktokv.com': 'tiktok.com', 'byteoversea.com': 'tiktok.com',
@@ -852,6 +854,9 @@ def top_websites(request):
         # LINE
         'line.me': 'line.me', 'line-scdn.net': 'line.me', 
         'line-apps.com': 'line.me', 'naver.jp': 'line.me',
+        'linecorp.com': 'line.me', 'line.naver.jp': 'line.me',
+        # X / Twitter
+        'x.com': 'x.com', 'twitter.com': 'x.com', 't.co': 'x.com', 'twimg.com': 'x.com',
         # E-Commerce
         'shopee.co.th': 'shopee.co.th', 'shopeemobile.com': 'shopee.co.th',
         'lazada.co.th': 'lazada.co.th',
