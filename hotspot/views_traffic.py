@@ -1041,46 +1041,59 @@ def top_websites(request):
 def sync_daily_stats(request):
     """
     Manually trigger aggregation for missing days.
-    Checks what's in TrafficLog vs DailyWebsiteStats and fills the gaps up to yesterday.
+    Optimized: Checks only the last 7 days and processes one day at a time to prevent web timeout.
     """
     from datetime import time, timedelta
+    
+    # 1. กำหนดวันที่ที่ควรจะมีข้อมูลล่าสุด (คือ เมื่อวาน)
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
     
-    # 1. Find the date range available in TrafficLog
-    # (Since logs are cleared every 2 days, we only care about what's actually there)
-    first_log = TrafficLog.objects.order_by('log_time').first()
-    if not first_log:
-        messages.warning(request, "ไม่พบข้อมูล Log ในระบบสำหรับนำมาประมวลผล")
+    # 2. ตรวจสอบจากตารางสรุปผล (ตารางเล็ก - เร็วมาก)
+    # ถ้ามีข้อมูลของเมื่อวานอยู่แล้ว แสดงว่าระบบอัปเดตล่าสุดแล้ว จบงานทันที
+    if DailyWebsiteStats.objects.filter(date=yesterday).exists():
+        messages.info(request, f"ข้อมูลสถิติของวันที่ {yesterday} (ล่าสุด) มีอยู่ในระบบเรียบร้อยแล้ว ไม่ต้องทำอะไรเพิ่มเติม")
         return HttpResponse('<script>window.location.href=document.referrer;</script>')
+
+    # 3. หากยังไม่มีข้อมูลเมื่อวาน ให้ค่อยๆ เช็คย้อนหลัง (ไม่เกิน 7 วัน)
+    lookback_days = 7
+    start_check_date = today - timedelta(days=lookback_days)
     
-    log_start_date = first_log.log_time.date()
+    # ดึงวันที่ที่มีอยู่แล้วมาทำเป็น Set เพื่อเช็คใน Memory (เร็ว)
+    existing_dates = set(
+        DailyWebsiteStats.objects.filter(
+            date__gte=start_check_date,
+            date__lte=yesterday
+        ).values_list('date', flat=True).distinct()
+    )
     
-    # We aggregate up to yesterday (we don't aggregate 'today' until it's over)
-    target_dates = []
-    curr = log_start_date
-    while curr <= yesterday:
-        # Check if already aggregated
-        exists = DailyWebsiteStats.objects.filter(date=curr).exists()
-        if not exists:
-            target_dates.append(curr)
-        curr += timedelta(days=1)
+    target_date = None
+    curr = yesterday
+    while curr >= start_check_date:
+        if curr not in existing_dates:
+            # เช็คว่ามี Log สำหรับวันนี้ไหม (ใช้ Range Query เพื่อให้ใช้ Index ได้)
+            d_start = datetime.combine(curr, time.min)
+            d_end = datetime.combine(curr, time.max)
+            has_logs = TrafficLog.objects.filter(log_time__range=(d_start, d_end)).exists()
+            
+            if has_logs:
+                target_date = curr
+                break
+        curr -= timedelta(days=1)
         
-    if not target_dates:
-        messages.info(request, f"ข้อมูลสถิติจนถึงวันที่ {yesterday} ถูกประมวลผลเรียบร้อยแล้ว ไม่ต้องทำอะไรเพิ่มเติม")
+    if not target_date:
+        messages.info(request, f"ข้อมูลสถิติจนถึงวันที่ {yesterday} ถูกสรุปไว้เรียบร้อยแล้ว (ตรวจสอบย้อนหลัง {lookback_days} วัน)")
         return HttpResponse('<script>window.location.href=document.referrer;</script>')
 
-    # 2. Re-use the logic from management command
+    # 4. เริ่มการประมวลผล (ทีละ 1 วัน)
     from django.core.management import call_command
-    processed_count = 0
-    for d in target_dates:
-        try:
-            date_str = d.strftime('%Y-%m-%d')
-            call_command('aggregate_daily_stats', date=date_str)
-            processed_count += 1
-        except Exception as e:
-            print(f"Error aggregating {d}: {e}")
+    try:
+        date_str = target_date.strftime('%Y-%m-%d')
+        # เรียกคำสั่งเดิมที่เราปรับปรุงให้กรอง Domain แม่นยำแล้ว
+        call_command('aggregate_daily_stats', date=date_str)
+        messages.success(request, f"ประมวลผลข้อมูลของวันที่ {date_str} สำเร็จเรียบร้อยแล้ว")
+    except Exception as e:
+        messages.error(request, f"เกิดข้อผิดพลาดในการประมวลผลวันที่ {date_str}: {str(e)}")
 
-    messages.success(request, f"ประมวลผลข้อมูลย้อนหลังสำเร็จทั้งหมด {processed_count} วัน (จนถึงวันที่ {yesterday})")
     return HttpResponse('<script>window.location.href=document.referrer;</script>')
 
