@@ -935,7 +935,7 @@ def top_websites(request):
         if start_dt_obj and start_dt_obj < today:
             live_qs = live_qs.filter(log_time__gte=datetime.combine(today, time.min))
         
-        MAX_SAMPLE = 100_000
+        MAX_SAMPLE = 30000  # ลดจาก 100,000 เพื่อกันหน้าเว็บ Timeout (502 Bad Gateway)
         rows = list(live_qs.values('url', 'method', 'destination_ip', 'source_ip')[:MAX_SAMPLE])
         
         raw_stats = {}
@@ -943,9 +943,22 @@ def top_websites(request):
             parsed = parse_log_entry(row['url'], row['method'])
             domain = (parsed.get('domain') or '').strip().lower()
             dst_ip = (parsed.get('dst_ip') or row.get('destination_ip', '')).strip()
-            key = domain or dst_ip
-            if not key or key == '-': continue
-            if key not in raw_stats: raw_stats[key] = {'count': 0, 'users': set(), 'is_ip': not domain and re.match(r'^\d{1,3}(\.\d{1,3}){3}$', key)}
+            
+            # ถ้ามี Domain ตรงๆ จาก Log ให้ใช้ตัวนั้นและ Map ทันที
+            key = None
+            if domain and domain != '-':
+                key = map_domain(domain)
+            elif dst_ip and dst_ip != '-':
+                key = dst_ip
+            
+            if not key: continue
+            
+            if key not in raw_stats: 
+                raw_stats[key] = {
+                    'count': 0, 
+                    'users': set(), 
+                    'is_ip': re.match(r'^\d{1,3}(\.\d{1,3}){3}$', key)
+                }
             raw_stats[key]['count'] += 1
             raw_stats[key]['users'].add(row.get('source_ip'))
 

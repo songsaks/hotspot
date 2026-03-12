@@ -10,6 +10,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--date', type=str, help='Date to aggregate (YYYY-MM-DD)')
+        parser.add_argument('--force', action='store_true', help='Force re-aggregation even if data exists')
 
     def handle(self, *args, **options):
         # 1. กำหนดวันที่ที่ต้องการสรุป (Default: เมื่อวานนี้)
@@ -20,6 +21,11 @@ class Command(BaseCommand):
             target_date = (datetime.now() - timedelta(days=1)).date()
 
         self.stdout.write(f"Aggregating stats for: {target_date}")
+
+        # --- ตรวจสอบว่ามีข้อมูลอยู่แล้วหรือไม่ ---
+        if not options['force'] and DailyWebsiteStats.objects.filter(date=target_date).exists():
+            self.stdout.write(self.style.SUCCESS(f"Stats for {target_date} already exist. Skipping. (Use --force to override)"))
+            return
 
         # 2. Domain Mapping (ยุบรวมชื่อแบรนด์ยักษ์ใหญ่)
         DOMAIN_MAP = {
@@ -85,51 +91,34 @@ class Command(BaseCommand):
             self.stderr.write(f"No logs found for {target_date}")
             return
 
-        # 4. รวมกลุ่มข้อมูลเบื้องต้นจาก Database (Group By NAS + Source + Dest IP)
-        # ขั้นตอนนี้ช่วยลดข้อมูลจากล้านบรรทัดเหลือเพียงหลักร้อย/หลักพัน เพื่อรอการแปลง IP เป็นชื่อเว็บ
-        ip_agg = list(qs.values('nas_ip', 'source_ip', 'destination_ip').annotate(
+        # 4. รวมกลุ่มข้อมูลเบื้องต้นจาก Database (Group By NAS + Source + Dest IP + Raw Fields)
+        # ดึงฟิลด์ url และ method มาด้วยเพื่อสแกนหาชื่อเว็บตรงๆ จาก DNS Log
+        raw_data = list(qs.values('nas_ip', 'source_ip', 'destination_ip', 'url', 'method').annotate(
             visits=Count('id'),
             bytes=Sum('bytes_sent') + Sum('bytes_received')
-        ).order_by('-visits')[:1000])
+        ).order_by('-visits')[:5000]) # ขยายเป็น 5000 เพื่อความแม่นยำ
 
-        # 5. การแปลง IP เป็นชื่อเว็บไซต์แบบขนาน (Parallel DNS Lookup)
-        # เราใช้ ThreadPoolExecutor เพื่อให้พนักงานหลายคนช่วยกันถามชื่อเว็บไซต์พร้อมกัน (จบงานเร็วขึ้น 20 เท่า)
-        # และใช้ระบบ Cache 2 ชั้น (RAM + Redis) เพื่อจดจำชื่อที่เคยถามไปแล้ว
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        
-        unique_ips = list(set(item['destination_ip'] for item in ip_agg))
-        ip_to_domain = {}
-        
-        def resolve_and_map(ip):
-            hostname = reverse_dns_cached(ip)
-            if hostname:
-                domain = simplify_domain(hostname)
-                return ip, map_domain(domain)
-            return ip, None
+        # 5. การประมวลผล IP และ Domain
+        final_stats = {} # { (nas_ip, domain): {visits, bytes, users_set} }
+        ips_to_resolve = set()
 
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            futures = {executor.submit(resolve_and_map, ip): ip for ip in unique_ips}
-            for future in as_completed(futures):
-                try:
-                    ip, domain = future.result()
-                    if domain: ip_to_domain[ip] = domain
-                except: pass
-
-        # 6. ประมวลผลและนับ Unique Users ในหน่วยความจำ
-        # final_stats: { (nas_ip, domain): {visits, bytes, unique_users_set} }
-        final_stats = {} 
-
-        for item in ip_agg:
+        for item in raw_data:
             nas_ip = item['nas_ip']
-            ip = item['destination_ip']
             source_ip = item['source_ip']
+            dst_ip = item['destination_ip']
             
-            domain = ip_to_domain.get(ip)
-            # ข้ามข้อมูลที่ไม่สามารถระบุชื่อเว็บไซต์ได้ (เพื่อความคลีนของรายงาน)
-            if not domain or re.match(r'^\d{1,3}(\.\d{1,3}){3}$', domain):
-                continue
+            # พยายามแกะ Domain จาก Log ตรงๆ ก่อน (แม่นยำและเร็ว)
+            parsed = parse_log_entry(item['url'], item['method'])
+            domain = parsed.get('domain')
             
-            key = (nas_ip, domain)
+            if domain and domain != '-':
+                domain = map_domain(domain)
+            else:
+                # ถ้าไม่มี Domain ใน Log ให้เก็บ IP ไว้ทำ Reverse DNS ทีหลัง
+                ips_to_resolve.add(dst_ip)
+                domain = None # รอ Resolve
+
+            key = (nas_ip, domain, dst_ip) if not domain else (nas_ip, domain, None)
             if key not in final_stats:
                 final_stats[key] = {'visits': 0, 'bytes': 0, 'users': set()}
             
@@ -137,10 +126,47 @@ class Command(BaseCommand):
             final_stats[key]['bytes'] += (item['bytes'] or 0)
             final_stats[key]['users'].add(source_ip)
 
-        # 7. บันทึกผลลัพธ์ลงตารางสรุป DailyWebsiteStats
-        # เป็นการ "Extract" สาระสำคัญมาเก็บไว้ เพื่อให้ดูย้อนหลังได้ไม่จำกัดและโหลดเร็วมาก
+        # 6. ทำ Reverse DNS สำหรับรายการที่ยังไม่มี Domain
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        ip_to_domain = {}
+        
+        def resolve_and_map(ip):
+            hostname = reverse_dns_cached(ip)
+            if hostname:
+                dom = simplify_domain(hostname)
+                return ip, map_domain(dom)
+            return ip, None
+
+        if ips_to_resolve:
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                futures = {executor.submit(resolve_and_map, ip): ip for ip in ips_to_resolve}
+                for future in as_completed(futures):
+                    try:
+                        ip, dom = future.result()
+                        if dom: ip_to_domain[ip] = dom
+                    except: pass
+
+        # 7. ยุบรวมข้อมูล (Merge RDNS results into Domain list)
+        merged_stats = {} # { (nas_ip, domain): {visits, bytes, users_set} }
+        for (nas_ip, domain, dst_ip), stats in final_stats.items():
+            final_domain = domain
+            if not final_domain and dst_ip in ip_to_domain:
+                final_domain = ip_to_domain[dst_ip]
+            
+            if not final_domain or re.match(r'^\d{1,3}(\.\d{1,3}){3}$', final_domain):
+                continue # ข้ามถ้ายังเป็น IP
+                
+            m_key = (nas_ip, final_domain)
+            if m_key not in merged_stats:
+                merged_stats[m_key] = {'visits': 0, 'bytes': 0, 'users': set()}
+            
+            merged_stats[m_key]['visits'] += stats['visits']
+            merged_stats[m_key]['bytes'] += stats['bytes']
+            merged_stats[m_key]['users'].update(stats['users'])
+
+        # 8. บันทึกผลลัพธ์ลงตารางสรุป DailyWebsiteStats
         save_count = 0
-        for (nas_ip, domain), stats in final_stats.items():
+        for (nas_ip, domain), stats in merged_stats.items():
             DailyWebsiteStats.objects.update_or_create(
                 date=target_date,
                 nas_ip=nas_ip,
