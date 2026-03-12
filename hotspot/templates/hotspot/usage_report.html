@@ -19,14 +19,24 @@
 {% endblock %}
 
 {% block content %}
-<div class="mb-4 d-flex justify-content-between align-items-center">
+<div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
         <h4 class="fw-800 mb-0">Usage Summary Report</h4>
-        <p class="text-muted text-small">Aggregated bandwidth and connection statistics per user</p>
+        <p class="text-muted text-small mb-0">Aggregated bandwidth and connection statistics per user</p>
     </div>
-    <button onclick="window.print()" class="btn btn-light border btn-sm">
-        <i class="fas fa-print me-1"></i> Export PDF
-    </button>
+    <div class="d-flex align-items-center gap-2">
+        <form method="get" class="d-flex align-items-center gap-2">
+            <select name="nas_ip" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                <option value="all">All Routers</option>
+                {% for ip in available_nas %}
+                    <option value="{{ ip }}" {% if selected_nas == ip %}selected{% endif %}>{{ ip }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <button onclick="window.print()" class="btn btn-light border btn-sm">
+            <i class="fas fa-print me-1"></i> Export PDF
+        </button>
+    </div>
 </div>
 
 <div class="card border-0 shadow-sm">

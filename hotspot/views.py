@@ -503,9 +503,20 @@ def active_sessions(request):
 
 @login_required
 def usage_report(request):
+    nas_ip = request.GET.get('nas_ip', '').strip()
     allowed_routers = get_allowed_routers(request.user)
     
     with connection.cursor() as cursor:
+        # Get available NAS IPs for dropdown
+        if allowed_routers is None:
+            cursor.execute("SELECT DISTINCT nasipaddress FROM radacct WHERE nasipaddress != '' ORDER BY nasipaddress")
+            available_nas = [row[0] for row in cursor.fetchall()]
+        else:
+            if not allowed_routers:
+                available_nas = []
+            else:
+                available_nas = sorted(list(set(allowed_routers)))
+
         sql = """
             SELECT 
                 username, 
@@ -517,15 +528,28 @@ def usage_report(request):
             FROM radacct
         """
         params = []
+        where_clauses = []
         
+        # Branch Access Control
         if allowed_routers is not None:
              if not allowed_routers:
-                 sql += " WHERE 1=0"
+                 where_clauses.append("1=0")
              else:
                  placeholders = ','.join(['%s'] * len(allowed_routers))
-                 sql += f" WHERE nasipaddress IN ({placeholders})"
+                 where_clauses.append(f"nasipaddress IN ({placeholders})")
                  params.extend(allowed_routers)
         
+        # Specific Router Filter
+        if nas_ip and nas_ip != 'all':
+            if allowed_routers is not None and nas_ip not in allowed_routers:
+                where_clauses.append("1=0") # Unauthorized
+            else:
+                where_clauses.append("nasipaddress = %s")
+                params.append(nas_ip)
+
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
+            
         sql += """
             GROUP BY username
             ORDER BY last_connected DESC
@@ -537,6 +561,8 @@ def usage_report(request):
     
     return render(request, 'hotspot/usage_report.html', {
         'usage_data': usage_data,
+        'available_nas': available_nas,
+        'selected_nas': nas_ip,
         'title': 'Authentication Log (Full History)'
     })
 
@@ -689,23 +715,39 @@ def export_compliance_csv(request):
 @login_required
 def admin_logs(request):
     # Admin Activity Logs
-    activity_logs = AdminActivityLog.objects.all()[:200]
+    if request.user.is_superuser:
+        activity_logs = AdminActivityLog.objects.all()[:200]
+    else:
+        # Branch admins see actions from themselves AND others in the same branch
+        allowed_routers = get_allowed_routers(request.user)
+        if allowed_routers:
+            # Find all admins who have access to any of my allowed routers
+            peer_admin_usernames = list(User.objects.filter(
+                router_access__router_ip__in=allowed_routers
+            ).values_list('username', flat=True).distinct())
+            
+            activity_logs = AdminActivityLog.objects.filter(admin_user__in=peer_admin_usernames)[:200]
+        else:
+            # No branch assigned, only see own actions
+            activity_logs = AdminActivityLog.objects.filter(admin_user=request.user.username)[:200]
     
-    # System Logs from file
+    # System Logs (Only for Superadmins)
     system_logs = []
-    log_file_path = os.path.join(settings.LOGS_DIR, 'hotspot_system.log')
-    if os.path.exists(log_file_path):
-        try:
-            with open(log_file_path, 'r', encoding='utf-8') as f:
-                # Get last 100 lines
-                system_logs = f.readlines()[-100:]
-                system_logs.reverse()
-        except Exception as e:
-            system_logs = [f"Error reading system logs: {str(e)}"]
+    if request.user.is_superuser:
+        log_file_path = os.path.join(settings.LOGS_DIR, 'hotspot_system.log')
+        if os.path.exists(log_file_path):
+            try:
+                with open(log_file_path, 'r', encoding='utf-8') as f:
+                    # Get last 100 lines
+                    system_logs = f.readlines()[-100:]
+                    system_logs.reverse()
+            except Exception as e:
+                system_logs = [f"Error reading system logs: {str(e)}"]
 
     return render(request, 'hotspot/admin_logs.html', {
         'activity_logs': activity_logs,
-        'system_logs': system_logs
+        'system_logs': system_logs,
+        'is_super': request.user.is_superuser
     })
 
 @login_required
