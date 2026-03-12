@@ -832,83 +832,36 @@ def top_websites(request):
 
     # --- Mapping: known CDN/technical domains → human-readable service names ---
     DOMAIN_MAP = {
-        # Google
-        '1e100.net': 'google.com',
-        'googleusercontent.com': 'google.com',
-        'googleapis.com': 'google.com',
-        'gstatic.com': 'google.com',
-        'google.co.th': 'google.com',
-        'google.com.sg': 'google.com',
-        # YouTube
-        'googlevideo.com': 'youtube.com',
-        'ytimg.com': 'youtube.com',
-        'youtube-nocookie.com': 'youtube.com',
-        'youtu.be': 'youtube.com',
-        'yt3.ggpht.com': 'youtube.com',
-        # Facebook / Meta
-        'fbcdn.net': 'facebook.com',
-        'fbsbx.com': 'facebook.com',
-        'facebook.net': 'facebook.com',
-        'fb.com': 'facebook.com',
-        'fb.gg': 'facebook.com',
-        'instagram.com': 'instagram.com',
-        'cdninstagram.com': 'instagram.com',
+        # Google & YouTube
+        'google.com': 'google.com', 'google.co.th': 'google.com', 
+        '1e100.net': 'google.com', 'googleusercontent.com': 'google.com',
+        'googleapis.com': 'google.com', 'gstatic.com': 'google.com',
+        'youtube.com': 'youtube.com', 'googlevideo.com': 'youtube.com', 
+        'ytimg.com': 'youtube.com', 'youtu.be': 'youtube.com',
+        # Facebook & Instagram
+        'facebook.com': 'facebook.com', 'fbcdn.net': 'facebook.com', 
+        'facebook.net': 'facebook.com', 'fbsbx.com': 'facebook.com',
+        'fb.me': 'facebook.com', 'messenger.com': 'facebook.com',
+        'instagram.com': 'instagram.com', 'cdninstagram.com': 'instagram.com',
         # TikTok
-        'tiktokcdn.com': 'tiktok.com',
-        'tiktokv.com': 'tiktok.com',
-        'byteoversea.com': 'tiktok.com',
-        'musical.ly': 'tiktok.com',
-        'ibytedtos.com': 'tiktok.com',
-        'tiktokcdn-us.com': 'tiktok.com',
+        'tiktok.com': 'tiktok.com', 'tiktokcdn.com': 'tiktok.com', 
+        'tiktokv.com': 'tiktok.com', 'byteoversea.com': 'tiktok.com',
+        'ibytedtos.com': 'tiktok.com', 'musical.ly': 'tiktok.com',
+        'tiktokcdn-us.com': 'tiktok.com', 'snssdk.com': 'tiktok.com',
+        'amemv.com': 'tiktok.com',
         # LINE
-        'line-scdn.net': 'line.me',
-        'line-apps.com': 'line.me',
-        'line.naver.jp': 'line.me',
-        'linecorp.com': 'line.me',
-        # Microsoft
-        'microsoft.com': 'microsoft.com',
-        'msedge.net': 'microsoft.com',
-        'msn.com': 'microsoft.com',
-        'live.com': 'microsoft.com',
-        'office.com': 'microsoft.com',
-        'office365.com': 'microsoft.com',
-        'microsoftonline.com': 'microsoft.com',
-        'windows.net': 'microsoft.com',
-        'msdxcdn.microsoft.com': 'microsoft.com',
-        # Apple
-        'apple.com': 'apple.com',
-        'icloud.com': 'apple.com',
-        'mzstatic.com': 'apple.com',
-        'apple-dns.net': 'apple.com',
-        # Twitter/X
-        'twimg.com': 'x.com',
-        'twitter.com': 'x.com',
-        't.co': 'x.com',
-        # Netflix
-        'nflxvideo.net': 'netflix.com',
-        'nflximg.net': 'netflix.com',
-        'nflxso.net': 'netflix.com',
-        'nflxext.com': 'netflix.com',
-        # Spotify
-        'scdn.co': 'spotify.com',
-        'spotifycdn.com': 'spotify.com',
-        # Amazon / AWS
-        'amazonaws.com': 'amazonaws.com',
-        'cloudfront.net': 'cloudfront.net',
-        # Cloudflare
-        'cloudflare.com': 'cloudflare.com',
-        'cloudflare-dns.com': 'cloudflare.com',
-        # Akamai
-        'akamaized.net': 'akamai.net',
-        'akamai.net': 'akamai.net',
-        'akamaitechnologies.com': 'akamai.net',
-        'akamaihd.net': 'akamai.net',
-        # Discord
-        'discord.gg': 'discord.com',
-        'discordapp.com': 'discord.com',
-        # Lazada / Shopee
+        'line.me': 'line.me', 'line-scdn.net': 'line.me', 
+        'line-apps.com': 'line.me', 'naver.jp': 'line.me',
+        # E-Commerce
+        'shopee.co.th': 'shopee.co.th', 'shopeemobile.com': 'shopee.co.th',
         'lazada.co.th': 'lazada.co.th',
-        'shopee.co.th': 'shopee.co.th',
+        # Microsoft
+        'microsoft.com': 'microsoft.com', 'live.com': 'microsoft.com',
+        'office.com': 'microsoft.com', 'windows.net': 'microsoft.com',
+        'microsoftonline.com': 'microsoft.com', 'msedge.net': 'microsoft.com',
+        # Others
+        'netflix.com': 'netflix.com', 'spotify.com': 'spotify.com',
+        'apple.com': 'apple.com', 'cloudflare.com': 'cloudflare.com',
     }
 
     def map_domain(raw_domain):
@@ -964,7 +917,7 @@ def top_websites(request):
         ).order_by('-visits')[:top_n * 2]
 
         for s in db_stats:
-            d = s['domain']
+            d = map_domain(s['domain'])
             if d not in domain_stats: domain_stats[d] = {'count': 0, 'users': 0}
             domain_stats[d]['count'] += s['visits']
             domain_stats[d]['users'] += s['users']
