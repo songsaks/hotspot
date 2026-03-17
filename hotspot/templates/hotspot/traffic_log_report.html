@@ -49,6 +49,7 @@
                     <tr>
                         <th class="ps-4">Time</th>
                         <th>User IP</th>
+                        <th>MAC Address</th>
                         <th>Destination IP</th>
                         <th>Website / URL</th>
                     </tr>
@@ -58,12 +59,13 @@
                     <tr>
                         <td class="ps-4 text-nowrap">{{ log.time|date:"H:i:s" }}</td>
                         <td><span class="badge bg-secondary font-monospace">{{ log.ip }}</span></td>
+                        <td><span class="badge bg-light text-muted border font-monospace" style="font-size:0.75rem;">{{ log.mac }}</span></td>
                         <td><span class="badge bg-light text-dark border font-monospace">{{ log.destination_ip }}</span></td>
                         <td class="text-break">{{ log.website }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-5 text-muted">
+                        <td colspan="5" class="text-center py-5 text-muted">
                             <i class="fas fa-search fa-3x mb-3 text-light"></i>
                             <p class="mb-0">No traffic logs found for this user in the specified period.</p>
                             <small>Ensure the user had an active session and traffic was logged.</small>

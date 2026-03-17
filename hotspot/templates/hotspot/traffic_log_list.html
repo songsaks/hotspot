@@ -307,8 +307,9 @@
                     <th style="width:10%;">Router</th>
                     <th style="width:10%;">User</th>
                     <th style="width:11%;">Client IP</th>
-                    <th style="width:20%;">URL</th>
-                    <th style="width:11%;">Dest IP</th>
+                    <th style="width:13%;">MAC Address</th>
+                    <th style="width:15%;">URL</th>
+                    <th style="width:10%;">Dest IP</th>
                     <th style="width:7%;" class="text-center">Port</th>
                 </tr>
             </thead>
@@ -350,6 +351,12 @@
                     </td>
 
                     <td>
+                        <span class="cell-ip" style="color:#64748b; font-size:0.7rem;">
+                            {{ item.mac_address }}
+                        </span>
+                    </td>
+
+                    <td>
                         {% if item.domain %}
                             <span class="cell-domain"><i class="fas fa-globe me-1"></i>{{ item.domain }}</span>
                         {% elif item.dst_ip %}
@@ -377,7 +384,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center py-5">
+                    <td colspan="9" class="text-center py-5">
                         <i class="fas fa-inbox fa-2x mb-2" style="color:#e2e8f0;"></i>
                         <p class="text-muted mb-0" style="font-size:0.8rem;">No traffic logs found.</p>
                     </td>

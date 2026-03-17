@@ -159,7 +159,7 @@ def lookup_active_sessions_for_logs(logs_list):
         Radacct.objects.using('default')
         .filter(framedipaddress__in=source_ips)
         .filter(acctstarttime__gte=search_start_time)
-        .values('username', 'framedipaddress', 'acctstarttime', 'acctstoptime')
+        .values('username', 'framedipaddress', 'acctstarttime', 'acctstoptime', 'callingstationid')
         .order_by('framedipaddress', '-acctstarttime')
     )
 
@@ -187,6 +187,7 @@ def enrich_logs(logs, resolve_dns=False):
         src_ip = src_ip.strip() if src_ip else ''
         
         user = '-'
+        mac = '-'
         log_t = log.log_time
         
         if src_ip and log_t and src_ip in active_sessions:
@@ -209,11 +210,13 @@ def enrich_logs(logs, resolve_dns=False):
                 
                 if start and (start - skew) <= norm_log_t and (stop is None or (stop + skew) >= norm_log_t):
                     user = s['username']
+                    mac = s.get('callingstationid', '-')
                     break
             
             # 2. Add fallback: if no perfect overlap, just use the most recent login for this IP
             if user == '-':
                 user = active_sessions[src_ip][0]['username']
+                mac = active_sessions[src_ip][0].get('callingstationid', '-')
         
         # Handle NO MATCH
         dst = parsed['dst_ip'] or log.destination_ip
@@ -246,6 +249,7 @@ def enrich_logs(logs, resolve_dns=False):
             'protocol': parsed['protocol'],
             'port_name': parsed['port_name'],
             'username': user, 
+            'mac_address': mac,
             'log_type': display_type
         })
     return enriched
@@ -368,17 +372,20 @@ def export_traffic_excel(request):
             from datetime import timedelta
             skew = timedelta(hours=14)
             
+            mac = '-'
             for s in active_sessions[client_ip]:
                 start = normalize_time(s['acctstarttime'], norm_log_t)
                 stop = normalize_time(s['acctstoptime'], norm_log_t) if s['acctstoptime'] else None
                 if start and (start - skew) <= norm_log_t and (stop is None or (stop + skew) >= norm_log_t):
                     user = s['username']
+                    mac = s.get('callingstationid', '-')
                     break
             
             if user == '-':
                 user = active_sessions[client_ip][0]['username']
+                mac = active_sessions[client_ip][0].get('callingstationid', '-')
              
-        final_logs.append((log, parsed, domain, user))
+        final_logs.append((log, parsed, domain, user, mac))
 
     # Create Workbook
     wb = Workbook()
@@ -396,8 +403,8 @@ def export_traffic_excel(request):
     ip_font = Font(name='Consolas', size=10, color='0F766E')
     user_font = Font(name='Calibri', size=10, bold=True, color='D97706') # Amber color for user
     
-    # Headers (Added Username)
-    headers = ['Type', 'Time', 'Router (NAS)', 'Client IP', 'Username', 'Domain / Website', 'Dest IP', 'Port', 'Protocol']
+    # Headers (Added Username, MAC)
+    headers = ['Type', 'Time', 'Router (NAS)', 'Client IP', 'MAC Address', 'Username', 'Domain / Website', 'Dest IP', 'Port', 'Protocol']
     
     for col, header in enumerate(headers, 1):
         c = ws.cell(row=1, column=col, value=header)
@@ -406,7 +413,7 @@ def export_traffic_excel(request):
         c.alignment = header_align
 
     # Data Rows
-    for row_idx, (log, parsed, domain, username) in enumerate(final_logs, 2):
+    for row_idx, (log, parsed, domain, username, mac) in enumerate(final_logs, 2):
         client_ip = parsed['client_ip'] or log.source_ip
         
         # 1. Type
@@ -421,31 +428,34 @@ def export_traffic_excel(request):
         # 4. Client IP
         ws.cell(row=row_idx, column=4, value=client_ip).font = ip_font
         
-        # 5. Username (New)
-        ws.cell(row=row_idx, column=5, value=username).font = user_font
+        # 5. MAC Address (New)
+        ws.cell(row=row_idx, column=5, value=mac).font = ip_font
         
-        # 6. Domain / Website
+        # 6. Username (New)
+        ws.cell(row=row_idx, column=6, value=username).font = user_font
+        
+        # 7. Domain / Website
         display_domain = domain
         if not display_domain:
              display_domain = log.url if log.url and log.url != '-' else (log.method or '')
              
-        c = ws.cell(row=row_idx, column=6, value=display_domain)
+        c = ws.cell(row=row_idx, column=7, value=display_domain)
         c.font = cell_font # Use normal font
         
-        # 7. Dest IP
+        # 8. Dest IP
         display_dst = parsed['dst_ip'] or ''
         if display_dst == '**NO MATCH**' or not display_dst:
             display_dst = '--'
-        ws.cell(row=row_idx, column=7, value=display_dst).font = ip_font
+        ws.cell(row=row_idx, column=8, value=display_dst).font = ip_font
         
-        # 8. Port
-        ws.cell(row=row_idx, column=8, value=parsed['port_name'] or '').font = cell_font
+        # 9. Port
+        ws.cell(row=row_idx, column=9, value=parsed['port_name'] or '').font = cell_font
         
-        # 9. Protocol
-        ws.cell(row=row_idx, column=9, value=parsed['protocol'] or '').font = cell_font
+        # 10. Protocol
+        ws.cell(row=row_idx, column=10, value=parsed['protocol'] or '').font = cell_font
     
     # Auto-size columns
-    col_widths = [10, 20, 16, 16, 20, 40, 16, 10, 10]
+    col_widths = [10, 20, 16, 16, 20, 20, 40, 16, 10, 10]
     for i, width in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = width
     
@@ -520,6 +530,7 @@ def traffic_log_report(request):
             
             for session in sessions:
                 ip = session.framedipaddress
+                mac = session.callingstationid
                 start_time = session.acctstarttime
                 stop_time = session.acctstoptime if session.acctstoptime else timezone.now()
                 
@@ -580,6 +591,7 @@ def traffic_log_report(request):
                         'time': log['log_time'],
                         'username': search_username,
                         'ip': ip,
+                        'mac': mac,
                         'website': website_info,
                         'destination_ip': dst_ip if dst_ip != ip else log['source_ip']
                     })
