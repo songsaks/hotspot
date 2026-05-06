@@ -83,7 +83,16 @@ def dashboard(request):
 
 @login_required
 def registration_requests(request):
-    pending_users = PendingUser.objects.all().order_by('-created_at')
+    allowed_routers = get_allowed_routers(request.user)
+    
+    # Filter pending users by allowed routers
+    if allowed_routers is None:
+        pending_users_qs = PendingUser.objects.all()
+    else:
+        # Only show requests for routers the admin manages
+        pending_users_qs = PendingUser.objects.filter(router_ip__in=allowed_routers)
+        
+    pending_users = pending_users_qs.order_by('-created_at')
     
     # Detect potential duplicates
     # 1. Same full_name or phone appearing multiple times in pending
@@ -215,6 +224,10 @@ def reject_user(request, pk):
 
 # This view is PUBLIC (no login required) - Called by Mikrotik
 def self_register(request):
+    # Try to capture the Router IP from Mikrotik redirect parameters
+    # server-address is common for the Mikrotik's local IP
+    router_ip = request.POST.get('router_ip') or request.GET.get('server-address') or request.GET.get('nasid') or ''
+    
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '').strip()
@@ -223,7 +236,7 @@ def self_register(request):
         
         if not username or not password:
             messages.error(request, "Username and Password are required.")
-            return render(request, 'hotspot/self_register.html')
+            return render(request, 'hotspot/self_register.html', {'router_ip': router_ip})
             
         # Check if username already exists in any of our 3 user tables (Case-Insensitive)
         username_exists = (
@@ -234,17 +247,18 @@ def self_register(request):
         
         if username_exists:
             messages.error(request, "This username is already taken or pending approval.")
-            return render(request, 'hotspot/self_register.html')
+            return render(request, 'hotspot/self_register.html', {'router_ip': router_ip})
             
         PendingUser.objects.create(
             username=username,
             password=password,
             full_name=full_name,
-            phone=phone
+            phone=phone,
+            router_ip=router_ip
         )
         return render(request, 'hotspot/registration_success.html', {'username': username})
         
-    return render(request, 'hotspot/self_register.html')
+    return render(request, 'hotspot/self_register.html', {'router_ip': router_ip})
 
 @login_required
 def member_directory(request):

@@ -84,6 +84,7 @@ class PendingUser(models.Model):
     password = models.CharField(max_length=64)
     full_name = models.CharField(max_length=100, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    router_ip = models.CharField(max_length=50, blank=True, null=True, help_text="IP of the router where request originated")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

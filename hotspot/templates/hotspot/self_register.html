@@ -157,6 +157,7 @@
 
             <form method="POST">
                 {% csrf_token %}
+                <input type="hidden" name="router_ip" value="{{ router_ip|default:'' }}">
                 <div class="mb-3">
                     <label>Username</label>
                     <div class="input-icon-group">
